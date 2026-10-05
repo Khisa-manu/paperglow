@@ -2,18 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User } from 'lucide-react';
 
 interface NavbarProps {
+  currentView: 'home' | 'applications' | 'application-detail';
   subscribedAppCount: number;
   isDark: boolean;
   toggleDarkMode: () => void;
   onOpenAccount: () => void;
+  onNavigateHome: () => void;
+  onNavigateApplications: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  currentView,
   subscribedAppCount,
   isDark,
   toggleDarkMode,
   onOpenAccount,
+  onNavigateHome,
+  onNavigateApplications,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,20 +33,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { id: 'hero', label: 'Overview' },
-    { id: 'applications', label: 'Business Applications' },
-    { id: 'account', label: 'One Account' },
-    { id: 'branding', label: 'Branding & Customization' },
-    { id: 'how-it-works', label: 'How It Works' },
-    { id: 'why-paperglow', label: 'Why Paperglow' },
-  ];
-
-  const handleLinkClick = (id: string) => {
-    onNavigateSection(id);
-    setIsMobileMenuOpen(false);
-  };
-
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-150 border-b ${
@@ -53,8 +45,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Zone 1: Single text element wordmark */}
           <button
-            onClick={() => handleLinkClick('hero')}
-            className="flex items-center space-x-2 text-left group focus:outline-none"
+            onClick={onNavigateHome}
+            className="flex items-center space-x-2 text-left group focus:outline-none cursor-pointer"
           >
             <span className="w-2.5 h-2.5 rounded-sm bg-red-600"></span>
             <span className="text-xl font-bold tracking-tight font-['Poppins'] text-neutral-900 dark:text-neutral-100">
@@ -64,15 +56,48 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Zone 2: Clean text navigation links */}
           <nav className="hidden lg:flex items-center space-x-7 text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => handleLinkClick(link.id)}
-                className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
-              >
-                {link.label}
-              </button>
-            ))}
+            <button
+              onClick={onNavigateHome}
+              className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer ${
+                currentView === 'home' ? 'text-red-600 dark:text-red-500 font-semibold' : ''
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={onNavigateApplications}
+              className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer ${
+                currentView === 'applications' || currentView === 'application-detail'
+                  ? 'text-red-600 dark:text-red-500 font-semibold'
+                  : ''
+              }`}
+            >
+              Applications Directory
+            </button>
+            <button
+              onClick={() => onNavigateSection('account')}
+              className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
+            >
+              One Account
+            </button>
+            <button
+              onClick={() => onNavigateSection('branding')}
+              className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
+            >
+              Branding &amp; Customization
+            </button>
+            <button
+              onClick={() => onNavigateSection('how-it-works')}
+              className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
+            >
+              How It Works
+            </button>
+            <button
+              onClick={() => onNavigateSection('why-paperglow')}
+              className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
+            >
+              Why Paperglow
+            </button>
           </nav>
 
           {/* Zone 3: Primary Actions */}
@@ -89,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Paperglow Account Button */}
             <button
               onClick={onOpenAccount}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center space-x-1.5 shadow-xs"
+              className="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer"
             >
               <User className="w-3.5 h-3.5" />
               <span>
@@ -112,15 +137,42 @@ export const Navbar: React.FC<NavbarProps> = ({
         {isMobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0f1115]">
             <div className="flex flex-col space-y-3">
-              {navLinks.map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => handleLinkClick(link.id)}
-                  className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
-                >
-                  {link.label}
-                </button>
-              ))}
+              <button
+                onClick={() => {
+                  onNavigateHome();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => {
+                  onNavigateApplications();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+              >
+                Applications Directory
+              </button>
+              <button
+                onClick={() => {
+                  onNavigateSection('branding');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+              >
+                Branding &amp; Customization
+              </button>
+              <button
+                onClick={() => {
+                  onNavigateSection('how-it-works');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+              >
+                How It Works
+              </button>
               <div className="pt-2">
                 <button
                   onClick={() => {

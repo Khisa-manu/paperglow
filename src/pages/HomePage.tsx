@@ -23,18 +23,22 @@ interface HomePageProps {
   subscribedAppIds: string[];
   onToggleSubscription: (appId: string) => void;
   onViewAppDetail: (app: BusinessApp) => void;
+  onSelectAppDetail: (appId: string) => void;
   onViewBrandingDetail: (item: BrandingItem) => void;
   onOpenAccount: () => void;
   onNavigateSection: (sectionId: string) => void;
+  onNavigateToDirectory: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   subscribedAppIds,
   onToggleSubscription,
   onViewAppDetail,
+  onSelectAppDetail,
   onViewBrandingDetail,
   onOpenAccount,
   onNavigateSection,
+  onNavigateToDirectory,
 }) => {
   return (
     <div className="space-y-24 sm:space-y-32 pb-24">
@@ -112,16 +116,25 @@ export const HomePage: React.FC<HomePageProps> = ({
           View Application button, Subscribe button
       ────────────────────────────────────────────────────────── */}
       <section id="applications" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center max-w-2xl mx-auto space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
-            Ecosystem Catalog
-          </span>
-          <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
-            Featured Business Applications
-          </h2>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Modular software designed for real business tasks. Subscribe only to what you need, with no multi-year vendor lock-in.
-          </p>
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-2 max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+              Ecosystem Products
+            </span>
+            <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+              Featured Business Applications
+            </h2>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Modular software products designed for real business tasks. Subscribe only to what you need, with no multi-year vendor lock-in.
+            </p>
+          </div>
+          <button
+            onClick={onNavigateToDirectory}
+            className="px-4 py-2 text-xs font-bold rounded-lg border border-neutral-300 dark:border-neutral-700 hover:border-red-600 text-neutral-800 dark:text-neutral-200 hover:text-red-600 transition-colors flex items-center gap-1.5 w-fit"
+          >
+            <span>Browse Full App Directory</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -173,8 +186,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {/* Card Actions: View Application + Subscribe */}
                 <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-3">
                   <button
-                    onClick={() => onViewAppDetail(app)}
-                    className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors flex items-center gap-1"
+                    onClick={() => onSelectAppDetail(app.id)}
+                    className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <span>View Application</span>
                     <ExternalLink className="w-3.5 h-3.5" />
