@@ -12,6 +12,8 @@ import {
   Users,
   Kanban,
   FileCheck,
+  FileSpreadsheet,
+  Building2,
   HelpCircle,
   Sparkles,
 } from 'lucide-react';
@@ -47,6 +49,10 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
 
   const getAppIcon = (iconName: string) => {
     switch (iconName) {
+      case 'Building2':
+        return <Building2 className="w-5 h-5 text-red-600" />;
+      case 'FileSpreadsheet':
+        return <FileSpreadsheet className="w-5 h-5 text-red-600" />;
       case 'ReceiptText':
         return <ReceiptText className="w-5 h-5 text-red-600" />;
       case 'Users':

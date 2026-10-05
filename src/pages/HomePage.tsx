@@ -21,6 +21,8 @@ import {
   Users,
   Kanban,
   FileCheck,
+  FileSpreadsheet,
+  Building2,
   Clock,
   Check,
 } from 'lucide-react';
@@ -50,6 +52,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const getAppIcon = (iconName: string) => {
     switch (iconName) {
+      case 'Building2':
+        return <Building2 className="w-5 h-5 text-red-600" />;
+      case 'FileSpreadsheet':
+        return <FileSpreadsheet className="w-5 h-5 text-red-600" />;
       case 'ReceiptText':
         return <ReceiptText className="w-5 h-5 text-red-600" />;
       case 'Users':
@@ -222,13 +228,37 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                 {/* Card Actions: View Application + Subscribe */}
                 <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-3">
-                  <button
-                    onClick={() => onSelectAppDetail(app.id)}
-                    className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View Application</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onSelectAppDetail(app.id)}
+                      className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Details</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                    {app.id === 'paperglow-business-manager' && (
+                      <button
+                        onClick={() => {
+                          window.location.hash = 'business-manager';
+                        }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer bg-red-50 dark:bg-red-950/60 px-2 py-1 rounded-sm border border-red-200 dark:border-red-900/60"
+                      >
+                        <span>Open Manager</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    )}
+                    {app.id === 'paperglow-invoice-generator' && (
+                      <button
+                        onClick={() => {
+                          window.location.hash = 'invoice-generator';
+                        }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer bg-red-50 dark:bg-red-950/60 px-2 py-1 rounded-sm border border-red-200 dark:border-red-900/60"
+                      >
+                        <span>Launch App</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
 
                   <button
                     onClick={() => onToggleSubscription(app.id)}

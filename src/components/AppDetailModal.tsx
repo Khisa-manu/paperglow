@@ -6,6 +6,7 @@ interface AppDetailModalProps {
   app: BusinessApp | null;
   isSubscribed: boolean;
   onToggleSubscription: (appId: string) => void;
+  onViewFullDetail?: (appId: string) => void;
   onClose: () => void;
 }
 
@@ -13,6 +14,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
   app,
   isSubscribed,
   onToggleSubscription,
+  onViewFullDetail,
   onClose,
 }) => {
   if (!app) return null;
@@ -104,9 +106,18 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-3 w-full sm:w-auto">
+            {onViewFullDetail && (
+              <button
+                type="button"
+                onClick={() => onViewFullDetail(app.id)}
+                className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                View Screenshots &amp; Tiers
+              </button>
+            )}
             <button
               onClick={() => onToggleSubscription(app.id)}
-              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center space-x-1.5 ${
+              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 isSubscribed
                   ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-300'
                   : 'bg-red-600 hover:bg-red-700 text-white shadow-sm'

@@ -6,6 +6,8 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { AccountPage } from './pages/AccountPage';
 import { BrandingPage } from './pages/BrandingPage';
+import { InvoiceGeneratorPage } from './pages/InvoiceGeneratorPage';
+import { BusinessManagerPage } from './pages/BusinessManagerPage';
 import { AppDetailModal } from './components/AppDetailModal';
 import { ProductConfiguratorModal } from './components/ProductConfiguratorModal';
 import { CartDrawer } from './components/CartDrawer';
@@ -27,8 +29,8 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding'>('home');
-  const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-invoice');
+  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager'>('home');
+  const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-business-manager');
 
   // Customer Account & Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
@@ -43,7 +45,7 @@ export const App: React.FC = () => {
 
   const [subscribedAppIds, setSubscribedAppIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('paperglow_subscribed_apps');
-    return saved ? JSON.parse(saved) : ['paperglow-invoice', 'paperglow-crm'];
+    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
   });
 
   const [softwareOrders, setSoftwareOrders] = useState<SoftwareOrder[]>(() => {
@@ -66,6 +68,8 @@ export const App: React.FC = () => {
   const [selectedConfigProduct, setSelectedConfigProduct] = useState<BrandingProduct | null>(null);
   const [modalApp, setModalApp] = useState<BusinessApp | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [accountTab, setAccountTab] = useState<'overview' | 'subscribed' | 'available' | 'merch' | 'orders' | 'profile'>('overview');
+  const [ssoTargetApp, setSsoTargetApp] = useState<BusinessApp | null>(null);
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem('paperglow_theme_dark') === 'true';
@@ -75,6 +79,16 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
+      if (hash === 'business-manager' || hash === 'biz' || hash === 'manager') {
+        setCurrentView('business-manager');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (hash === 'invoice-generator' || hash === 'invoice' || hash === 'quotation') {
+        setCurrentView('invoice-generator');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       if (hash === 'branding') {
         setCurrentView('branding');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -222,7 +236,7 @@ export const App: React.FC = () => {
     setMerchandiseOrders((prev) => [...newOrders, ...prev]);
     setCartItems([]);
     setIsCartOpen(false);
-    navigateAccount();
+    navigateAccount('merch');
   };
 
   const handleApproveArtworkProof = (orderId: string) => {
@@ -262,13 +276,26 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigateInvoiceGenerator = () => {
+    window.location.hash = 'invoice-generator';
+    setCurrentView('invoice-generator');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateBusinessManager = () => {
+    window.location.hash = 'business-manager';
+    setCurrentView('business-manager');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const navigateBranding = () => {
     window.location.hash = 'branding';
     setCurrentView('branding');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateAccount = () => {
+  const navigateAccount = (tab?: 'overview' | 'subscribed' | 'available' | 'merch' | 'orders' | 'profile') => {
+    if (tab) setAccountTab(tab);
     window.location.hash = 'account';
     setCurrentView('account');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -300,6 +327,8 @@ export const App: React.FC = () => {
         onNavigateHome={navigateHome}
         onNavigateApplications={navigateApplications}
         onNavigateBranding={navigateBranding}
+        onNavigateInvoiceGenerator={navigateInvoiceGenerator}
+        onNavigateBusinessManager={navigateBusinessManager}
         onNavigateSection={navigateToSection}
       />
 
@@ -324,7 +353,16 @@ export const App: React.FC = () => {
             subscribedAppIds={subscribedAppIds}
             onToggleSubscription={toggleSubscription}
             onSelectAppDetail={navigateToAppDetail}
-            onLaunchApp={() => navigateAccount()}
+            onLaunchApp={(app) => {
+              if (app.id === 'paperglow-business-manager') {
+                navigateBusinessManager();
+              } else if (app.id === 'paperglow-invoice-generator') {
+                navigateInvoiceGenerator();
+              } else {
+                setSsoTargetApp(app);
+                navigateAccount('subscribed');
+              }
+            }}
             onNavigateHome={navigateHome}
           />
         )}
@@ -334,7 +372,16 @@ export const App: React.FC = () => {
             app={currentDetailApp}
             isSubscribed={subscribedAppIds.includes(currentDetailApp.id)}
             onToggleSubscription={toggleSubscription}
-            onLaunchApp={() => navigateAccount()}
+            onLaunchApp={(app) => {
+              if (app.id === 'paperglow-business-manager') {
+                navigateBusinessManager();
+              } else if (app.id === 'paperglow-invoice-generator') {
+                navigateInvoiceGenerator();
+              } else {
+                setSsoTargetApp(app);
+                navigateAccount('subscribed');
+              }
+            }}
             onBackToDirectory={navigateApplications}
             onOpenAccount={navigateAccount}
           />
@@ -349,6 +396,22 @@ export const App: React.FC = () => {
           />
         )}
 
+        {currentView === 'business-manager' && (
+          <BusinessManagerPage
+            onNavigateHome={navigateHome}
+            onBackToDirectory={navigateApplications}
+            onOpenAccount={navigateAccount}
+          />
+        )}
+
+        {currentView === 'invoice-generator' && (
+          <InvoiceGeneratorPage
+            onBackToDirectory={navigateApplications}
+            onNavigateHome={navigateHome}
+            onOpenAccount={navigateAccount}
+          />
+        )}
+
         {currentView === 'account' && (
           <AccountPage
             isLoggedIn={isLoggedIn}
@@ -357,12 +420,24 @@ export const App: React.FC = () => {
             subscribedAppIds={subscribedAppIds}
             softwareOrders={softwareOrders}
             merchandiseOrders={merchandiseOrders}
+            initialTab={accountTab}
+            initialSsoApp={ssoTargetApp}
+            onClearInitialSsoApp={() => setSsoTargetApp(null)}
             onLogin={handleLogin}
             onLogout={handleLogout}
             onUpdateProfile={handleUpdateProfile}
             onToggleSubscription={toggleSubscription}
             onApproveArtworkProof={handleApproveArtworkProof}
-            onLaunchApp={() => navigateAccount()}
+            onLaunchApp={(app) => {
+              if (app.id === 'paperglow-business-manager') {
+                navigateBusinessManager();
+              } else if (app.id === 'paperglow-invoice-generator') {
+                navigateInvoiceGenerator();
+              } else {
+                setSsoTargetApp(app);
+                navigateAccount('subscribed');
+              }
+            }}
             onNavigateHome={navigateHome}
             onNavigateToDirectory={navigateApplications}
           />
@@ -380,6 +455,10 @@ export const App: React.FC = () => {
         app={modalApp}
         isSubscribed={modalApp ? subscribedAppIds.includes(modalApp.id) : false}
         onToggleSubscription={toggleSubscription}
+        onViewFullDetail={(appId) => {
+          setModalApp(null);
+          navigateToAppDetail(appId);
+        }}
         onClose={() => setModalApp(null)}
       />
 

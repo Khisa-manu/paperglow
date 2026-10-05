@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager';
   isLoggedIn: boolean;
   userName?: string;
   subscribedAppCount: number;
@@ -14,6 +14,8 @@ interface NavbarProps {
   onNavigateHome: () => void;
   onNavigateApplications: () => void;
   onNavigateBranding: () => void;
+  onNavigateInvoiceGenerator?: () => void;
+  onNavigateBusinessManager?: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
@@ -30,6 +32,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigateHome,
   onNavigateApplications,
   onNavigateBranding,
+  onNavigateInvoiceGenerator,
+  onNavigateBusinessManager,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -84,6 +88,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Applications Directory
             </button>
+            {onNavigateBusinessManager && (
+              <button
+                onClick={onNavigateBusinessManager}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  currentView === 'business-manager'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Business Manager</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white">
+                  Biz Ops
+                </span>
+              </button>
+            )}
+            {onNavigateInvoiceGenerator && (
+              <button
+                onClick={onNavigateInvoiceGenerator}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  currentView === 'invoice-generator'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Invoice Generator</span>
+              </button>
+            )}
             <button
               onClick={onNavigateBranding}
               className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer ${
@@ -187,6 +218,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 Applications Directory
               </button>
+              {onNavigateBusinessManager && (
+                <button
+                  onClick={() => {
+                    onNavigateBusinessManager();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md flex items-center justify-between"
+                >
+                  <span>Paperglow Business Manager</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">Biz Ops</span>
+                </button>
+              )}
+              {onNavigateInvoiceGenerator && (
+                <button
+                  onClick={() => {
+                    onNavigateInvoiceGenerator();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+                >
+                  Invoice &amp; Quotation Generator
+                </button>
+              )}
               <button
                 onClick={() => {
                   onNavigateBranding();
