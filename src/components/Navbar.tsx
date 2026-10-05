@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager';
   isLoggedIn: boolean;
   userName?: string;
   subscribedAppCount: number;
@@ -16,6 +16,7 @@ interface NavbarProps {
   onNavigateBranding: () => void;
   onNavigateInvoiceGenerator?: () => void;
   onNavigateBusinessManager?: () => void;
+  onNavigatePropertyManager?: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
@@ -34,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigateBranding,
   onNavigateInvoiceGenerator,
   onNavigateBusinessManager,
+  onNavigatePropertyManager,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -113,6 +115,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <span>Invoice Generator</span>
+              </button>
+            )}
+            {onNavigatePropertyManager && (
+              <button
+                onClick={onNavigatePropertyManager}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  (currentView as string) === 'property-manager'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Property Manager</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
+                  Real Estate
+                </span>
               </button>
             )}
             <button
@@ -239,6 +256,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
                 >
                   Invoice &amp; Quotation Generator
+                </button>
+              )}
+              {onNavigatePropertyManager && (
+                <button
+                  onClick={() => {
+                    onNavigatePropertyManager();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md flex items-center justify-between"
+                >
+                  <span>Paperglow Property Manager</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
+                    Real Estate
+                  </span>
                 </button>
               )}
               <button

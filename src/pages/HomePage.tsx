@@ -247,6 +247,17 @@ export const HomePage: React.FC<HomePageProps> = ({
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     )}
+                    {app.id === 'paperglow-property-manager' && (
+                      <button
+                        onClick={() => {
+                          window.location.hash = 'property-manager';
+                        }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer bg-red-50 dark:bg-red-950/60 px-2 py-1 rounded-sm border border-red-200 dark:border-red-900/60"
+                      >
+                        <span>Open Property Hub</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    )}
                     {app.id === 'paperglow-invoice-generator' && (
                       <button
                         onClick={() => {

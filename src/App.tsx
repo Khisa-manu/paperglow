@@ -8,6 +8,7 @@ import { AccountPage } from './pages/AccountPage';
 import { BrandingPage } from './pages/BrandingPage';
 import { InvoiceGeneratorPage } from './pages/InvoiceGeneratorPage';
 import { BusinessManagerPage } from './pages/BusinessManagerPage';
+import { PropertyManagerPage } from './pages/PropertyManagerPage';
 import { AppDetailModal } from './components/AppDetailModal';
 import { ProductConfiguratorModal } from './components/ProductConfiguratorModal';
 import { CartDrawer } from './components/CartDrawer';
@@ -29,7 +30,7 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager'>('home');
   const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-business-manager');
 
   // Customer Account & Authentication State
@@ -45,7 +46,7 @@ export const App: React.FC = () => {
 
   const [subscribedAppIds, setSubscribedAppIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('paperglow_subscribed_apps');
-    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
+    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-property-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
   });
 
   const [softwareOrders, setSoftwareOrders] = useState<SoftwareOrder[]>(() => {
@@ -81,6 +82,11 @@ export const App: React.FC = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash === 'business-manager' || hash === 'biz' || hash === 'manager') {
         setCurrentView('business-manager');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (hash === 'property-manager' || hash === 'properties' || hash === 'pm' || hash === 'rent') {
+        setCurrentView('property-manager');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -288,6 +294,12 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigatePropertyManager = () => {
+    window.location.hash = 'property-manager';
+    setCurrentView('property-manager');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const navigateBranding = () => {
     window.location.hash = 'branding';
     setCurrentView('branding');
@@ -329,6 +341,7 @@ export const App: React.FC = () => {
         onNavigateBranding={navigateBranding}
         onNavigateInvoiceGenerator={navigateInvoiceGenerator}
         onNavigateBusinessManager={navigateBusinessManager}
+        onNavigatePropertyManager={navigatePropertyManager}
         onNavigateSection={navigateToSection}
       />
 
@@ -356,6 +369,8 @@ export const App: React.FC = () => {
             onLaunchApp={(app) => {
               if (app.id === 'paperglow-business-manager') {
                 navigateBusinessManager();
+              } else if (app.id === 'paperglow-property-manager') {
+                navigatePropertyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -375,6 +390,8 @@ export const App: React.FC = () => {
             onLaunchApp={(app) => {
               if (app.id === 'paperglow-business-manager') {
                 navigateBusinessManager();
+              } else if (app.id === 'paperglow-property-manager') {
+                navigatePropertyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -398,6 +415,14 @@ export const App: React.FC = () => {
 
         {currentView === 'business-manager' && (
           <BusinessManagerPage
+            onNavigateHome={navigateHome}
+            onBackToDirectory={navigateApplications}
+            onOpenAccount={navigateAccount}
+          />
+        )}
+
+        {currentView === 'property-manager' && (
+          <PropertyManagerPage
             onNavigateHome={navigateHome}
             onBackToDirectory={navigateApplications}
             onOpenAccount={navigateAccount}
@@ -431,6 +456,8 @@ export const App: React.FC = () => {
             onLaunchApp={(app) => {
               if (app.id === 'paperglow-business-manager') {
                 navigateBusinessManager();
+              } else if (app.id === 'paperglow-property-manager') {
+                navigatePropertyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
