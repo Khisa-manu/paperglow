@@ -1,526 +1,463 @@
-import React, { useState, useEffect } from 'react';
-import { CLIENTS, FACTS, PROJECTS, SERVICES, ARTICLES, STUDIO_PHOTOS } from '../data/portfolioData';
-import { Project, Article } from '../types';
-import { ArrowRight, ArrowUpRight, Check, Sparkles } from 'lucide-react';
+import React from 'react';
+import {
+  FEATURED_APPLICATIONS,
+  BRANDING_PRODUCTS,
+  WORKFLOW_STEPS,
+  VALUE_PILLARS,
+} from '../data/paperglowData';
+import { BusinessApp, BrandingItem } from '../types';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Layers,
+  KeyRound,
+  CheckSquare,
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  UserCheck,
+  Package,
+} from 'lucide-react';
 
 interface HomePageProps {
-  onSelectProject: (project: Project) => void;
-  onSelectArticle: (article: Article) => void;
-  onNavigateTab: (tab: string) => void;
+  subscribedAppIds: string[];
+  onToggleSubscription: (appId: string) => void;
+  onViewAppDetail: (app: BusinessApp) => void;
+  onViewBrandingDetail: (item: BrandingItem) => void;
+  onOpenAccount: () => void;
+  onNavigateSection: (sectionId: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
-  onSelectProject,
-  onSelectArticle,
-  onNavigateTab,
+  subscribedAppIds,
+  onToggleSubscription,
+  onViewAppDetail,
+  onViewBrandingDetail,
+  onOpenAccount,
+  onNavigateSection,
 }) => {
-  // Counter animation logic
-  const [counts, setCounts] = useState<{ [key: string]: number }>({
-    shipped: 0,
-    clients: 0,
-    awards: 0,
-  });
-
-  useEffect(() => {
-    const duration = 1600;
-    const steps = 40;
-    const intervalTime = duration / steps;
-    let step = 0;
-
-    const timer = setInterval(() => {
-      step++;
-      const progress = Math.min(step / steps, 1);
-      // easeOutExpo formula
-      const factor = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-
-      setCounts({
-        shipped: Math.floor(214 * factor),
-        clients: Math.floor(96 * factor),
-        awards: Math.floor(18 * factor),
-      });
-
-      if (step >= steps) {
-        clearInterval(timer);
-        setCounts({ shipped: 214, clients: 96, awards: 18 });
-      }
-    }, intervalTime);
-
-    return () => clearInterval(timer);
-  }, []);
-
   return (
-    <div className="space-y-24 sm:space-y-32">
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-32 sm:pt-40 pb-16 overflow-hidden">
-        {/* Subtle Watermark background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none z-0">
-          <span className="watermark-text text-8xl sm:text-[14rem] font-black block">
-            STUDIO
-          </span>
-        </div>
-
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-surface border border-divider">
-            <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
-            <span>Independent Design &amp; Technology Practice</span>
+    <div className="space-y-24 sm:space-y-32 pb-24">
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 1: HERO
+          Paperglow branding, clear dual-engine headline,
+          Primary CTA: Explore Applications, Secondary CTA: Brand Your Business
+      ────────────────────────────────────────────────────────── */}
+      <section id="hero" className="pt-32 sm:pt-40 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          {/* Subtle Brand Tagline */}
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md text-xs font-semibold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+            <span className="w-2 h-2 rounded-xs bg-red-600"></span>
+            <span>Paperglow Platform</span>
+            <span>•</span>
+            <span className="text-neutral-500">Business Applications &amp; Physical Customization</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight font-['Poppins'] leading-[1.15] text-contrast">
-            We are a{' '}
-            <span
-              className="underline decoration-wavy decoration-2 underline-offset-8"
-              style={{ textDecorationColor: 'var(--color-primary)' }}
-            >
-              design and development
-            </span>{' '}
-            studio based in California
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-6xl font-bold font-['Poppins'] tracking-tight text-neutral-900 dark:text-neutral-100 leading-[1.15]">
+            Run Your Digital Operations.{' '}
+            <span className="text-red-600 dark:text-red-500">Wear &amp; Display Your Brand.</span>
           </h1>
 
-          <p className="text-muted text-lg sm:text-xl max-w-2xl mx-auto font-normal leading-relaxed">
-            We partner with visionary startups and global brands to build durable digital products, thoughtful identities, and scalable design systems.
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+            Paperglow brings essential business software and professional physical branding services together. One unified account powers your invoicing, client CRM, and project tracking while equipping your company with custom uniforms, apparel, and event signage.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          {/* Hero CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <button
-              onClick={() => onNavigateTab('work')}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl flex items-center justify-center gap-2"
-              style={{ backgroundColor: 'var(--color-primary)' }}
+              onClick={() => onNavigateSection('applications')}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-colors flex items-center justify-center space-x-2"
             >
-              <span>Browse our work</span>
+              <span>Explore Applications</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              onClick={() => onNavigateTab('contact')}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold border border-divider hover:bg-surface text-contrast transition-all hover:-translate-y-0.5"
+              onClick={() => onNavigateSection('branding')}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-lg text-sm font-semibold border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
-              Let&apos;s start a project
+              Brand Your Business
             </button>
           </div>
         </div>
-      </section>
 
-      {/* 2. CLIENT LOGOS */}
-      <section className="border-y border-divider py-10 bg-surface/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted mb-8">
-            Trusted by innovators and established industry leaders
-          </p>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center justify-items-center opacity-70 hover:opacity-100 transition-opacity">
-            {CLIENTS.map((client) => (
-              <div
-                key={client.name}
-                className="h-10 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300"
-                title={client.name}
-              >
-                <img
-                  src={client.logo}
-                  alt={client.name}
-                  className="max-h-8 max-w-[120px] object-contain dark:invert"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. FEATURED WORKS (STAGGERED 2-COLUMN GRID) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-muted block mb-2">
-              Portfolio
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-['Poppins'] tracking-tight">
-              Selected Works
-            </h2>
-          </div>
-          <button
-            onClick={() => onNavigateTab('work')}
-            className="text-sm font-semibold flex items-center gap-1.5 transition-colors group"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            <span>View all projects</span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
-
-        {/* 2-column staggered grid matching theme.json pattern */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14">
-          {/* Column 1 */}
-          <div className="space-y-12">
-            {/* Project 1: Nookdesk */}
-            <div
-              className="group cursor-pointer rounded-2xl overflow-hidden border border-divider bg-surface transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              onClick={() => onSelectProject(PROJECTS[0])}
-            >
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted/10">
-                <img
-                  src={PROJECTS[0].image}
-                  alt={PROJECTS[0].title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-base/90 backdrop-blur-md text-contrast shadow-sm">
-                    {PROJECTS[0].category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl sm:text-2xl font-bold font-['Poppins'] group-hover:text-primary transition-colors">
-                    {PROJECTS[0].title}
-                  </h3>
-                  <div className="w-8 h-8 rounded-full border border-divider flex items-center justify-center text-muted group-hover:text-contrast group-hover:border-contrast transition-colors">
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted leading-relaxed line-clamp-2">
-                  {PROJECTS[0].summary}
-                </p>
-                <div className="pt-2 flex flex-wrap gap-2">
-                  {PROJECTS[0].tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-xs px-2.5 py-0.5 rounded bg-base border border-divider text-muted">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+        {/* Dual Pillar Summary Strip */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+          <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-500">
+              <Layers className="w-4 h-4" />
+              <span>Digital Business Applications</span>
             </div>
-
-            {/* Project 2: Whisk */}
-            <div
-              className="group cursor-pointer rounded-2xl overflow-hidden border border-divider bg-surface transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              onClick={() => onSelectProject(PROJECTS[1])}
-            >
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted/10">
-                <img
-                  src={PROJECTS[1].image}
-                  alt={PROJECTS[1].title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-base/90 backdrop-blur-md text-contrast shadow-sm">
-                    {PROJECTS[1].category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl sm:text-2xl font-bold font-['Poppins'] group-hover:text-primary transition-colors">
-                    {PROJECTS[1].title}
-                  </h3>
-                  <div className="w-8 h-8 rounded-full border border-divider flex items-center justify-center text-muted group-hover:text-contrast group-hover:border-contrast transition-colors">
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted leading-relaxed line-clamp-2">
-                  {PROJECTS[1].summary}
-                </p>
-                <div className="pt-2 flex flex-wrap gap-2">
-                  {PROJECTS[1].tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-xs px-2.5 py-0.5 rounded bg-base border border-divider text-muted">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Column 2 (Offset/Staggered) */}
-          <div className="space-y-12 md:mt-16">
-            {/* Project 3: Harrow & Pine */}
-            <div
-              className="group cursor-pointer rounded-2xl overflow-hidden border border-divider bg-surface transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              onClick={() => onSelectProject(PROJECTS[2])}
-            >
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted/10">
-                <img
-                  src={PROJECTS[2].image}
-                  alt={PROJECTS[2].title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-base/90 backdrop-blur-md text-contrast shadow-sm">
-                    {PROJECTS[2].category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl sm:text-2xl font-bold font-['Poppins'] group-hover:text-primary transition-colors">
-                    {PROJECTS[2].title}
-                  </h3>
-                  <div className="w-8 h-8 rounded-full border border-divider flex items-center justify-center text-muted group-hover:text-contrast group-hover:border-contrast transition-colors">
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted leading-relaxed line-clamp-2">
-                  {PROJECTS[2].summary}
-                </p>
-                <div className="pt-2 flex flex-wrap gap-2">
-                  {PROJECTS[2].tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-xs px-2.5 py-0.5 rounded bg-base border border-divider text-muted">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Project 4: Arcade Club */}
-            <div
-              className="group cursor-pointer rounded-2xl overflow-hidden border border-divider bg-surface transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              onClick={() => onSelectProject(PROJECTS[3])}
-            >
-              <div className="relative aspect-[4/3] overflow-hidden bg-muted/10">
-                <img
-                  src={PROJECTS[3].image}
-                  alt={PROJECTS[3].title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-base/90 backdrop-blur-md text-contrast shadow-sm">
-                    {PROJECTS[3].category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl sm:text-2xl font-bold font-['Poppins'] group-hover:text-primary transition-colors">
-                    {PROJECTS[3].title}
-                  </h3>
-                  <div className="w-8 h-8 rounded-full border border-divider flex items-center justify-center text-muted group-hover:text-contrast group-hover:border-contrast transition-colors">
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted leading-relaxed line-clamp-2">
-                  {PROJECTS[3].summary}
-                </p>
-                <div className="pt-2 flex flex-wrap gap-2">
-                  {PROJECTS[3].tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-xs px-2.5 py-0.5 rounded bg-base border border-divider text-muted">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. QUICK FACTS / STATS COUNTER */}
-      <section className="relative py-20 bg-surface border-y border-divider overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-center">
-          <span className="watermark-text text-7xl sm:text-9xl font-black">
-            QUICK FACT
-          </span>
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-            {FACTS.map((fact) => {
-              const currentVal = counts[fact.id] || 0;
-              return (
-                <div key={fact.id} className="space-y-2">
-                  <div
-                    className="text-5xl sm:text-7xl font-extrabold font-['Poppins'] tracking-tight"
-                    style={{ color: fact.colorVar }}
-                  >
-                    {currentVal}
-                  </div>
-                  <div className="text-base sm:text-lg font-medium text-contrast/90">
-                    {fact.label}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. DARK SERVICES BAND ("What we do") */}
-      <section className="bg-[#121417] text-white py-24 sm:py-32 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-2xl mb-16 space-y-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-white/50">
-              Our Capabilities
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-['Poppins'] tracking-tight text-white">
-              End-to-end craft across strategy, design, and code
-            </h2>
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed">
-              We eliminate handoff silos. Our team designs with technical feasibility in mind and codes with meticulous visual discernment.
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Invoicing, customer pipelines, project boards, and team directories accessible through a single sign-on workspace.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {SERVICES.map((service, i) => (
-              <div
-                key={service.id}
-                className="p-8 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-white/30 transition-all hover:-translate-y-1 space-y-5"
-              >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-lg text-white bg-white/10">
-                  0{i + 1}
-                </div>
-                <h3 className="text-xl font-bold font-['Poppins'] text-white">
-                  {service.title}
-                </h3>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  {service.description}
-                </p>
-                <div className="pt-4 border-t border-white/10 space-y-2">
-                  {service.deliverables.slice(0, 3).map((item) => (
-                    <div key={item} className="flex items-center space-x-2 text-xs text-white/60">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-16 text-center">
-            <button
-              onClick={() => onNavigateTab('services')}
-              className="px-6 py-3 rounded-xl text-sm font-semibold bg-white text-black hover:bg-white/90 transition-all shadow-md"
-            >
-              Explore Full Capabilities &amp; Pricing
-            </button>
+          <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-500">
+              <Package className="w-4 h-4" />
+              <span>Branding &amp; Customization</span>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Order graphic design, banners, branded apparel, uniforms, business cards, and customized merchandise directly.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* 6. STUDIO STRIP (ORIGINAL PHOTOGRAPHY FROM THEME) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-muted">
-            The Environment
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 2: FEATURED APPLICATIONS
+          Application Name, Short Description, Main Benefit,
+          View Application button, Subscribe button
+      ────────────────────────────────────────────────────────── */}
+      <section id="applications" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+            Ecosystem Catalog
           </span>
-          <h2 className="text-3xl font-extrabold font-['Poppins']">
-            Life at the Studio
+          <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+            Featured Business Applications
           </h2>
-          <p className="text-muted text-sm">
-            Curious minds, focused execution, and zero unnecessary bureaucracy.
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Modular software designed for real business tasks. Subscribe only to what you need, with no multi-year vendor lock-in.
           </p>
         </div>
 
-        {/* 5-photo responsive strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          {STUDIO_PHOTOS.map((photo, idx) => (
-            <div
-              key={idx}
-              className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-divider shadow-sm"
-            >
-              <img
-                src={photo.src}
-                alt={photo.alt}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 text-white text-xs">
-                <span>{photo.alt}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {FEATURED_APPLICATIONS.map((app) => {
+            const isSubscribed = subscribedAppIds.includes(app.id);
 
-      {/* 7. LATEST FROM BLOG */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-muted block mb-2">
-              Writing &amp; Perspectives
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold font-['Poppins'] tracking-tight">
-              From the Studio Journal
-            </h2>
-          </div>
-          <button
-            onClick={() => onNavigateTab('blog')}
-            className="text-sm font-semibold flex items-center gap-1.5 transition-colors group"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            <span>Read all articles</span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {ARTICLES.map((article) => (
-            <article
-              key={article.id}
-              onClick={() => onSelectArticle(article)}
-              className="group cursor-pointer p-6 rounded-2xl bg-surface border border-divider hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-muted">
-                  <span
-                    className="font-semibold uppercase tracking-wider text-xs"
-                    style={{ color: 'var(--color-primary)' }}
-                  >
-                    {article.category}
-                  </span>
-                  <span>{article.readTime}</span>
-                </div>
-                <h3 className="text-lg font-bold font-['Poppins'] group-hover:text-primary transition-colors leading-snug">
-                  {article.title}
-                </h3>
-                <p className="text-sm text-muted line-clamp-3 leading-relaxed">
-                  {article.excerpt}
-                </p>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-divider flex items-center justify-between">
-                <div className="flex items-center space-x-2.5">
-                  <img
-                    src={article.author.avatar}
-                    alt={article.author.name}
-                    className="w-7 h-7 rounded-full object-cover border border-divider"
-                  />
-                  <span className="text-xs font-medium text-contrast/80">
-                    {article.author.name}
-                  </span>
-                </div>
-                <span className="text-xs font-semibold flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
-                  Read <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* 8. CTA BAND */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className="relative rounded-3xl p-10 sm:p-16 text-center text-white overflow-hidden shadow-2xl"
-          style={{ backgroundColor: 'var(--color-primary-deep)' }}
-        >
-          {/* Decorative shapes */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/20">
-              New Engagements
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-['Poppins'] tracking-tight">
-              Have a project in mind? Let&apos;s build something extraordinary.
-            </h2>
-            <p className="text-white/80 text-base sm:text-lg leading-relaxed">
-              We are currently booking projects for next quarter. Tell us about your goals, timelines, and vision.
-            </p>
-            <div className="pt-2">
-              <button
-                onClick={() => onNavigateTab('contact')}
-                className="px-8 py-4 rounded-xl text-base font-bold bg-white text-black hover:bg-white/95 transition-all shadow-xl hover:scale-105"
+            return (
+              <div
+                key={app.id}
+                className="p-6 sm:p-7 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] flex flex-col justify-between space-y-6 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
               >
-                Schedule an Intro Call
-              </button>
+                <div className="space-y-4">
+                  {/* Category & Price */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-neutral-500">
+                      {app.category}
+                    </span>
+                    <span className="text-sm font-bold font-mono text-neutral-900 dark:text-neutral-100">
+                      ${app.monthlyPrice} <span className="text-xs font-normal text-neutral-500">/ mo</span>
+                    </span>
+                  </div>
+
+                  {/* Title & Tagline */}
+                  <div>
+                    <h3 className="text-xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                      {app.name}
+                    </h3>
+                    <p className="text-xs font-medium text-red-600 dark:text-red-500 mt-0.5">
+                      {app.tagline}
+                    </p>
+                  </div>
+
+                  {/* Short Description */}
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                    {app.description}
+                  </p>
+
+                  {/* Main Benefit Box */}
+                  <div className="p-3.5 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800">
+                    <div className="text-[11px] font-semibold uppercase text-neutral-500 mb-0.5">
+                      Main Commercial Benefit
+                    </div>
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                      {app.mainBenefit}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Card Actions: View Application + Subscribe */}
+                <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-3">
+                  <button
+                    onClick={() => onViewAppDetail(app)}
+                    className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors flex items-center gap-1"
+                  >
+                    <span>View Application</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => onToggleSubscription(app.id)}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                      isSubscribed
+                        ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
+                  >
+                    {isSubscribed ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Subscribed</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Subscribe</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 3: ONE PAPERGLOW ACCOUNT
+          Explain single account access, centralized control,
+          unified billing, and SSO
+      ────────────────────────────────────────────────────────── */}
+      <section id="account" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="p-8 sm:p-12 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#121419]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Explanation */}
+            <div className="lg:col-span-7 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+                Centralized Architecture
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                One Paperglow Account for Your Entire Business
+              </h2>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                Rather than creating separate passwords, invoices, and administrative panels for every tool, customers use one central Paperglow account. Log in once to launch subscribed applications, manage user seats, track physical merchandise proofs, and inspect unified billing.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="flex items-start space-x-2 text-xs text-neutral-700 dark:text-neutral-300">
+                  <UserCheck className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>Single Sign-On across all business tools</span>
+                </div>
+                <div className="flex items-start space-x-2 text-xs text-neutral-700 dark:text-neutral-300">
+                  <ShieldCheck className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>Central team role permissions management</span>
+                </div>
+                <div className="flex items-start space-x-2 text-xs text-neutral-700 dark:text-neutral-300">
+                  <Package className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>Track custom apparel and print shipments</span>
+                </div>
+                <div className="flex items-start space-x-2 text-xs text-neutral-700 dark:text-neutral-300">
+                  <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>Consolidated monthly statements and invoicing</span>
+                </div>
+              </div>
+
+              <div className="pt-3">
+                <button
+                  onClick={onOpenAccount}
+                  className="px-5 py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+                >
+                  Open Central Account Dashboard
+                </button>
+              </div>
             </div>
+
+            {/* Architecture Box */}
+            <div className="lg:col-span-5 p-6 rounded-lg bg-white dark:bg-[#161a22] border border-neutral-200 dark:border-neutral-800 space-y-4">
+              <div className="text-xs font-bold uppercase text-neutral-500 border-b border-neutral-200 dark:border-neutral-800 pb-2">
+                Unified Session Architecture
+              </div>
+              <div className="space-y-2 text-xs font-mono">
+                <div className="p-2.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
+                  <span>User: you@company.com</span>
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase">Authenticated</span>
+                </div>
+                <div className="pl-4 border-l-2 border-red-600 space-y-1.5 py-1">
+                  <div className="text-neutral-600 dark:text-neutral-400">
+                    ├─ Paperglow Invoice <span className="text-neutral-400 text-[10px]">(Active)</span>
+                  </div>
+                  <div className="text-neutral-600 dark:text-neutral-400">
+                    ├─ Paperglow CRM <span className="text-neutral-400 text-[10px]">(Active)</span>
+                  </div>
+                  <div className="text-neutral-600 dark:text-neutral-400">
+                    ├─ Paperglow Hub <span className="text-neutral-400 text-[10px]">(Active)</span>
+                  </div>
+                  <div className="text-neutral-600 dark:text-neutral-400">
+                    └─ Swag &amp; Print Orders <span className="text-neutral-400 text-[10px]">(Live Tracking)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 4: BRANDING & CUSTOMIZATION
+          Graphic Design, Banners, T-Shirts, Hoodies, Uniforms,
+          Caps, Business Cards, Custom Merchandise
+      ────────────────────────────────────────────────────────── */}
+      <section id="branding" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+            Physical Production Studio
+          </span>
+          <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+            Branding &amp; Customization
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Professional graphic design, commercial workwear, branded company apparel, and event print collateral ordered directly through Paperglow.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {BRANDING_PRODUCTS.map((item) => (
+            <div
+              key={item.id}
+              className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] flex flex-col justify-between space-y-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase text-red-600 dark:text-red-500">
+                    {item.category}
+                  </span>
+                  <span className="text-[11px] font-mono text-neutral-500">
+                    Min: {item.minOrder}
+                  </span>
+                </div>
+
+                <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                  {item.title}
+                </h3>
+
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-3 leading-relaxed">
+                  {item.description}
+                </p>
+
+                <div className="pt-2 text-[11px] text-neutral-500 space-y-1">
+                  <div>
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">Turnaround:</span> {item.turnaround}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">Starting:</span> {item.startingPrice}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                <button
+                  onClick={() => onViewBrandingDetail(item)}
+                  className="w-full py-2 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-colors flex items-center justify-center space-x-1"
+                >
+                  <span>Configure / Order</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 5: HOW PAPERGLOW WORKS
+          1. Create account
+          2. Explore applications
+          3. Subscribe or access an application
+          4. Manage everything from Paperglow
+      ────────────────────────────────────────────────────────── */}
+      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+            Process
+          </span>
+          <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+            How Paperglow Works
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            A frictionless workflow taking you from account creation to daily operational software and branded merch.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {WORKFLOW_STEPS.map((step) => (
+            <div
+              key={step.step}
+              className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] space-y-3"
+            >
+              <div className="text-2xl font-black font-mono text-red-600 dark:text-red-500">
+                {step.step}
+              </div>
+              <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                {step.title}
+              </h3>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                {step.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 6: WHY PAPERGLOW
+          Focus on convenience, one account, practical business tools
+          and professional branding
+      ────────────────────────────────────────────────────────── */}
+      <section id="why-paperglow" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-500">
+            The Advantage
+          </span>
+          <h2 className="text-3xl font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+            Why Businesses Choose Paperglow
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Practical software without complexity, paired with reliable commercial physical merchandise.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {VALUE_PILLARS.map((pillar, i) => (
+            <div
+              key={i}
+              className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] space-y-3"
+            >
+              <div className="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-500 flex items-center justify-center">
+                {i === 0 && <Layers className="w-5 h-5" />}
+                {i === 1 && <KeyRound className="w-5 h-5" />}
+                {i === 2 && <CheckSquare className="w-5 h-5" />}
+                {i === 3 && <Sparkles className="w-5 h-5" />}
+              </div>
+              <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                {pillar.title}
+              </h3>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                {pillar.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
+          SECTION 7: FINAL CTA
+          "Build your business with Paperglow."
+      ────────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="p-8 sm:p-12 rounded-xl bg-neutral-900 text-white text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold font-['Poppins'] tracking-tight">
+            Build your business with Paperglow.
+          </h2>
+          <p className="text-sm sm:text-base text-neutral-400 max-w-xl mx-auto leading-relaxed">
+            Consolidate your daily business applications and outfit your team with professional physical branding under one single Paperglow account.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={onOpenAccount}
+              className="w-full sm:w-auto px-7 py-3 rounded-lg text-sm font-bold bg-red-600 hover:bg-red-700 text-white transition-colors"
+            >
+              Create Your Paperglow Account
+            </button>
+            <button
+              onClick={() => onNavigateSection('applications')}
+              className="w-full sm:w-auto px-7 py-3 rounded-lg text-sm font-semibold border border-neutral-700 hover:bg-neutral-800 text-neutral-200 transition-colors"
+            >
+              Explore Software Catalog
+            </button>
           </div>
         </div>
       </section>

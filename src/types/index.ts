@@ -1,56 +1,37 @@
-export type ThemeScheme = 'azure' | 'violet' | 'coral' | 'emerald' | 'ink' | 'midnight';
-
-export interface Project {
-  slug: string;
-  title: string;
-  client: string;
-  category: string;
-  year: string;
-  image: string;
-  summary: string;
-  overview: string;
-  challenge: string;
-  solution: string;
-  results: string[];
-  tags: string[];
-  metrics?: { label: string; value: string }[];
-  deliverables?: string[];
-  testimonial?: {
-    quote: string;
-    author: string;
-    role: string;
-  };
-}
-
-export interface Article {
+export interface BusinessApp {
   id: string;
-  slug: string;
-  title: string;
-  category: string;
-  date: string;
-  readTime: string;
-  author: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  excerpt: string;
-  content: string[];
-  tags: string[];
-}
-
-export interface Service {
-  id: string;
-  title: string;
+  name: string;
   tagline: string;
   description: string;
-  deliverables: string[];
+  mainBenefit: string;
+  category: string;
+  monthlyPrice: number;
+  features: string[];
+  securityHighlights: string[];
   icon: string;
 }
 
-export interface Fact {
+export interface BrandingItem {
   id: string;
-  target: number;
-  label: string;
-  colorVar: string;
+  title: string;
+  category: string;
+  description: string;
+  materials: string;
+  startingPrice: string;
+  turnaround: string;
+  minOrder: string;
+  icon: string;
+  specs: string[];
+}
+
+export interface WorkflowStep {
+  step: string;
+  title: string;
+  description: string;
+}
+
+export interface ValuePillar {
+  title: string;
+  description: string;
+  icon: string;
 }

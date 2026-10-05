@@ -3,87 +3,37 @@
 @layer base {
   :root {
     --color-base: #ffffff;
-    --color-surface: #fbf9ff;
-    --color-contrast: #1f1f1f;
-    --color-muted: #6b6b6b;
-    --color-primary: #0070d8;
-    --color-primary-deep: #0059ad;
-    --color-accent: #00a7ff;
-    --color-secondary: #615cfd;
-    --color-tertiary: #e9652d;
-    --color-decor: #00d264;
+    --color-surface: #f9fafb;
+    --color-surface-hover: #f3f4f6;
+    --color-contrast: #111827;
+    --color-muted: #6b7280;
     --color-divider: #e5e7eb;
-    --color-dark: #121417;
+    
+    /* Paperglow Red brand signature */
+    --color-primary: #dc2626;
+    --color-primary-hover: #b91c1c;
+    --color-primary-light: #fef2f2;
+    --color-primary-dark: #991b1b;
+
+    --color-border: #e5e7eb;
+    --color-card-bg: #ffffff;
   }
 
-  /* Azure Palette */
-  [data-theme="azure"] {
-    --color-primary: #0070d8;
-    --color-primary-deep: #0059ad;
-    --color-accent: #00a7ff;
-    --color-secondary: #615cfd;
-    --color-tertiary: #e9652d;
-    --color-surface: #f7faff;
-  }
-
-  /* Violet Palette */
-  [data-theme="violet"] {
-    --color-primary: #5b3fd6;
-    --color-primary-deep: #4328b7;
-    --color-accent: #8b5cf6;
-    --color-secondary: #ec4899;
-    --color-tertiary: #f59e0b;
-    --color-surface: #f8f6ff;
-  }
-
-  /* Coral Palette */
-  [data-theme="coral"] {
-    --color-primary: #ea580c;
-    --color-primary-deep: #c2410c;
-    --color-accent: #fb923c;
-    --color-secondary: #d946ef;
-    --color-tertiary: #0284c7;
-    --color-surface: #fff8f5;
-  }
-
-  /* Emerald Palette */
-  [data-theme="emerald"] {
-    --color-primary: #059669;
-    --color-primary-deep: #047857;
-    --color-accent: #10b981;
-    --color-secondary: #6366f1;
-    --color-tertiary: #f97316;
-    --color-surface: #f4fbf8;
-  }
-
-  /* Ink Palette */
-  [data-theme="ink"] {
-    --color-primary: #18181b;
-    --color-primary-deep: #09090b;
-    --color-accent: #52525b;
-    --color-secondary: #4f46e5;
-    --color-tertiary: #e11d48;
-    --color-surface: #f4f4f5;
-  }
-
-  /* Midnight Palette */
-  [data-theme="midnight"] {
-    --color-primary: #38bdf8;
-    --color-primary-deep: #0284c7;
-    --color-accent: #818cf8;
-    --color-secondary: #a78bfa;
-    --color-tertiary: #f43f5e;
-    --color-surface: #131720;
-  }
-
-  /* Dark mode overrides */
   .dark {
     --color-base: #0f1115;
-    --color-surface: #161a22;
-    --color-contrast: #f3f4f6;
+    --color-surface: #16181d;
+    --color-surface-hover: #1f232b;
+    --color-contrast: #f9fafb;
     --color-muted: #9ca3af;
-    --color-divider: #262c38;
-    --color-dark: #090a0d;
+    --color-divider: #262a33;
+    
+    --color-primary: #ef4444;
+    --color-primary-hover: #dc2626;
+    --color-primary-light: rgba(239, 68, 68, 0.12);
+    --color-primary-dark: #991b1b;
+
+    --color-border: #262a33;
+    --color-card-bg: #14171d;
   }
 
   body {
@@ -95,41 +45,22 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
-/* Watermark typography as seen in original WordPress theme */
-.watermark-text {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  color: var(--color-contrast);
-  opacity: 0.05;
-  user-select: none;
-  pointer-events: none;
-  line-height: 0.8;
+/* Crisp button and border utilities */
+.paperglow-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
 }
 
-.dark .watermark-text {
-  opacity: 0.04;
-}
-
-/* Underline decoration from original theme */
-.title-accent {
-  position: relative;
-  display: inline-block;
-}
-
-.title-accent::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  width: 100%;
-  height: 8px;
-  background-color: var(--color-primary);
-  opacity: 0.25;
-  z-index: -1;
-  border-radius: 2px;
+.paperglow-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-primary);
 }

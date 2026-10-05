@@ -1,6 +1,6 @@
 {
-  "name": "Creative Agency - Studio & Portfolio",
-  "description": "A modern design and development studio portfolio featuring project case studies, client showcase, quick facts, services, interactive blog, contact inquiry system, and customizable color schemes.",
+  "name": "Paperglow — Business Applications & Custom Branding",
+  "description": "The unified platform bringing essential business applications and professional physical branding services together under one single Paperglow account.",
   "permissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
