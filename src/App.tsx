@@ -9,6 +9,7 @@ import { BrandingPage } from './pages/BrandingPage';
 import { InvoiceGeneratorPage } from './pages/InvoiceGeneratorPage';
 import { BusinessManagerPage } from './pages/BusinessManagerPage';
 import { PropertyManagerPage } from './pages/PropertyManagerPage';
+import { PharmacyManagerPage } from './pages/PharmacyManagerPage';
 import { AppDetailModal } from './components/AppDetailModal';
 import { ProductConfiguratorModal } from './components/ProductConfiguratorModal';
 import { CartDrawer } from './components/CartDrawer';
@@ -30,7 +31,7 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager'>('home');
   const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-business-manager');
 
   // Customer Account & Authentication State
@@ -46,7 +47,7 @@ export const App: React.FC = () => {
 
   const [subscribedAppIds, setSubscribedAppIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('paperglow_subscribed_apps');
-    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-property-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
+    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-property-manager', 'paperglow-pharmacy-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
   });
 
   const [softwareOrders, setSoftwareOrders] = useState<SoftwareOrder[]>(() => {
@@ -300,6 +301,12 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigatePharmacyManager = () => {
+    window.location.hash = 'pharmacy-manager';
+    setCurrentView('pharmacy-manager');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const navigateBranding = () => {
     window.location.hash = 'branding';
     setCurrentView('branding');
@@ -342,6 +349,7 @@ export const App: React.FC = () => {
         onNavigateInvoiceGenerator={navigateInvoiceGenerator}
         onNavigateBusinessManager={navigateBusinessManager}
         onNavigatePropertyManager={navigatePropertyManager}
+        onNavigatePharmacyManager={navigatePharmacyManager}
         onNavigateSection={navigateToSection}
       />
 
@@ -371,6 +379,8 @@ export const App: React.FC = () => {
                 navigateBusinessManager();
               } else if (app.id === 'paperglow-property-manager') {
                 navigatePropertyManager();
+              } else if (app.id === 'paperglow-pharmacy-manager') {
+                navigatePharmacyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -392,6 +402,8 @@ export const App: React.FC = () => {
                 navigateBusinessManager();
               } else if (app.id === 'paperglow-property-manager') {
                 navigatePropertyManager();
+              } else if (app.id === 'paperglow-pharmacy-manager') {
+                navigatePharmacyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -429,6 +441,13 @@ export const App: React.FC = () => {
           />
         )}
 
+        {currentView === 'pharmacy-manager' && (
+          <PharmacyManagerPage
+            onNavigateHome={navigateHome}
+            onBackToDirectory={navigateApplications}
+          />
+        )}
+
         {currentView === 'invoice-generator' && (
           <InvoiceGeneratorPage
             onBackToDirectory={navigateApplications}
@@ -458,6 +477,8 @@ export const App: React.FC = () => {
                 navigateBusinessManager();
               } else if (app.id === 'paperglow-property-manager') {
                 navigatePropertyManager();
+              } else if (app.id === 'paperglow-pharmacy-manager') {
+                navigatePharmacyManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
