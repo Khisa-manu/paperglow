@@ -1,0 +1,8 @@
+{
+  "name": "Creative Agency - Studio & Portfolio",
+  "description": "A modern design and development studio portfolio featuring project case studies, client showcase, quick facts, services, interactive blog, contact inquiry system, and customizable color schemes.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
