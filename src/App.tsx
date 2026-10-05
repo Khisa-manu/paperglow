@@ -184,6 +184,7 @@ export const App: React.FC = () => {
           tier: 'Professional Workspace',
           billingCadence: 'monthly',
           amount: app.monthlyPrice,
+          currency: 'KES',
           status: 'Paid',
         };
         setSoftwareOrders((prev) => [newOrder, ...prev]);
@@ -212,6 +213,7 @@ export const App: React.FC = () => {
       quantity: item.quantity,
       specs: `${Object.entries(item.selectedVariations).map(([k, v]) => `${k}: ${v}`).join(' · ')} (${item.customInstructions})`,
       totalAmount: item.totalPrice,
+      currency: 'KES',
       status: 'Proofing',
       estimatedDelivery: '7–10 business days (Pending proof approval)',
       artworkApproved: false,

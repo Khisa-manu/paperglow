@@ -22,7 +22,14 @@ import {
   KeyRound,
   Check,
   Search,
+  Smartphone,
+  Database,
+  RefreshCw,
+  UploadCloud,
+  FileText,
+  X,
 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface AccountPageProps {
   isLoggedIn: boolean;
@@ -110,9 +117,66 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     setTimeout(() => setProfileSuccessMsg(false), 3000);
   };
 
-  const triggerLaunch = (app: BusinessApp) => {
+  // SSO Modal State
+  const [ssoModalApp, setSsoModalApp] = useState<BusinessApp | null>(null);
+  const [ssoAuthData, setSsoAuthData] = useState<{ authCode: string; redirectUri: string; expiresInSeconds: number } | null>(null);
+  const [ssoVerifiedClaims, setSsoVerifiedClaims] = useState<any>(null);
+
+  // M-Pesa Payment Modal State
+  const [mpesaModalInvoice, setMpesaModalInvoice] = useState<SoftwareOrder | null>(null);
+  const [mpesaPhone, setMpesaPhone] = useState('+254712345678');
+  const [mpesaStatus, setMpesaStatus] = useState<'idle' | 'prompting' | 'confirmed'>('idle');
+  const [mpesaReceipt, setMpesaReceipt] = useState('');
+
+  // Proof Revision Modal State
+  const [revisionModalOrder, setRevisionModalOrder] = useState<MerchandiseOrder | null>(null);
+  const [revisionFeedback, setRevisionFeedback] = useState('');
+
+  const triggerLaunch = async (app: BusinessApp) => {
     setLaunchedAppNotice(app.name);
-    onLaunchApp(app);
+    try {
+      const res = await api.oauth.authorizeApp(app.id);
+      setSsoAuthData(res.data);
+      setSsoModalApp(app);
+
+      // Simulate token exchange to show live verified claims
+      const tokenRes = await api.oauth.exchangeToken(res.data.authCode);
+      setSsoVerifiedClaims(tokenRes.user_info);
+    } catch (err: any) {
+      alert(err.message || 'SSO Authorization failed');
+    }
+  };
+
+  const handleMpesaPay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mpesaModalInvoice) return;
+    setMpesaStatus('prompting');
+
+    try {
+      const res = await api.billing.payWithMpesa(mpesaModalInvoice.orderNumber, mpesaPhone);
+      setMpesaReceipt(res.data.providerReference);
+      setMpesaStatus('confirmed');
+    } catch (err: any) {
+      alert(err.message || 'M-Pesa payment failed');
+      setMpesaStatus('idle');
+    }
+  };
+
+  const handleRevisionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revisionModalOrder || !revisionFeedback) return;
+    try {
+      await api.orders.requestRevision(revisionModalOrder.id, revisionFeedback);
+      setRevisionModalOrder(null);
+      setRevisionFeedback('');
+      alert('Revision notes submitted to Paperglow prepress team!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit revision');
+    }
+  };
+
+  const handleDownloadDirectAdminSql = () => {
+    window.location.href = '/api/v1/export/directadmin-schema.sql';
   };
 
   // ──────────────────────────────────────────────────────────
@@ -828,7 +892,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-base font-bold text-neutral-900 dark:text-neutral-100">
-                      ${order.totalAmount} USD
+                      KES {order.totalAmount.toLocaleString()}
                     </span>
                     <div className="text-[11px] text-neutral-500">Qty: {order.quantity} units</div>
                   </div>
@@ -864,12 +928,23 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         Digital print proof ready for review. Approve artwork so production can begin.
                       </span>
                     </div>
-                    <button
-                      onClick={() => onApproveArtworkProof(order.id)}
-                      className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap"
-                    >
-                      Approve Print Proof
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => onApproveArtworkProof(order.id)}
+                        className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap cursor-pointer"
+                      >
+                        Approve Print Proof
+                      </button>
+                      <button
+                        onClick={() => {
+                          setRevisionModalOrder(order);
+                          setRevisionFeedback('');
+                        }}
+                        className="px-3.5 py-1.5 rounded-md text-xs font-semibold border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/40 whitespace-nowrap cursor-pointer"
+                      >
+                        Request Revision
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -924,17 +999,28 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     </td>
                     <td className="p-4 text-neutral-500 capitalize">{ord.billingCadence}</td>
                     <td className="p-4 font-mono font-bold text-right text-neutral-900 dark:text-neutral-100">
-                      ${ord.amount}.00 USD
+                      KES {ord.amount.toLocaleString()}
                     </td>
                     <td className="p-4 text-right">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
                         {ord.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right space-x-2">
+                      <button
+                        onClick={() => {
+                          setMpesaModalInvoice(ord);
+                          setMpesaStatus('idle');
+                        }}
+                        className="text-xs text-emerald-600 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        title="Simulate Safaricom M-Pesa STK Prompt"
+                      >
+                        <Smartphone className="w-3 h-3" />
+                        <span>M-Pesa</span>
+                      </button>
                       <button
                         onClick={() => alert(`Downloading official PDF receipt for ${ord.orderNumber}`)}
-                        className="text-xs text-red-600 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        className="text-xs text-neutral-500 font-semibold hover:text-red-600 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Download className="w-3 h-3" />
                         <span>PDF</span>
@@ -1060,8 +1146,272 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               </button>
             </div>
           </div>
+
+          {/* DirectAdmin MySQL Schema Export Card */}
+          <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] space-y-4 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold uppercase text-red-600">
+                <Database className="w-4 h-4" />
+                <span>DirectAdmin MySQL Production Database</span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                MySQL 8.0+ / MariaDB 10.5+
+              </span>
+            </div>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Complete relational database DDL with 21 tables, strict foreign keys, KES currency reference, Kenyan organization entities, and OAuth2/OIDC SSO tables ready to import directly into phpMyAdmin on your DirectAdmin hosting server.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="text-[11px] text-neutral-500">
+                File: <code className="text-neutral-800 dark:text-neutral-200 font-mono">database/paperglow_directadmin_mysql_schema.sql</code>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadDirectAdminSql}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:bg-neutral-800 transition-colors flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download DirectAdmin SQL</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          MODAL 1: SSO APP LAUNCH & TOKEN INSPECTOR (Phase 3)
+      ────────────────────────────────────────────────────────── */}
+      {ssoModalApp && ssoAuthData && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setSsoModalApp(null)}
+        >
+          <div
+            className="w-full max-w-xl bg-white dark:bg-[#14171d] rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs">
+                  SSO
+                </div>
+                <div>
+                  <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                    Launching {ssoModalApp.name} via Paperglow SSO
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">OAuth 2.0 Authorization Code Exchange</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSsoModalApp(null)}
+                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Identity authenticated! Authorization code generated with active entitlements.</span>
+            </div>
+
+            <div className="space-y-2 text-xs font-mono">
+              <div className="p-3 rounded bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span>Authorization Code:</span>
+                  <span className="text-red-600 font-bold">{ssoAuthData.authCode.slice(0, 24)}...</span>
+                </div>
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span>Target Destination:</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 truncate max-w-[280px]">{ssoAuthData.redirectUri}</span>
+                </div>
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span>Expiry Window:</span>
+                  <span>{ssoAuthData.expiresInSeconds} seconds</span>
+                </div>
+              </div>
+
+              {ssoVerifiedClaims && (
+                <div className="p-3 rounded bg-neutral-950 text-neutral-200 text-[10px] space-y-1">
+                  <div className="text-neutral-400 uppercase font-bold text-[9px]">Verified Signed JWT Claims:</div>
+                  <div>User: {ssoVerifiedClaims.name} ({ssoVerifiedClaims.email})</div>
+                  <div>Tenant Org: {ssoVerifiedClaims.org?.name} (KES / Kenya)</div>
+                  <div>Active Entitlements: {ssoVerifiedClaims.entitlements?.join(', ') || 'apps.access'}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              <button
+                onClick={() => setSsoModalApp(null)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
+              >
+                Close Inspector
+              </button>
+              <button
+                onClick={() => {
+                  alert(`Handoff to ${ssoModalApp.name} simulated! Token claims verified.`);
+                  setSsoModalApp(null);
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white flex items-center space-x-1"
+              >
+                <span>Proceed to App Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          MODAL 2: M-PESA STK PUSH PAYMENT (Phase 2)
+      ────────────────────────────────────────────────────────── */}
+      {mpesaModalInvoice && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setMpesaModalInvoice(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-[#14171d] rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-2">
+                <Smartphone className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                  Pay via Safaricom M-Pesa
+                </h3>
+              </div>
+              <button onClick={() => setMpesaModalInvoice(null)} className="text-neutral-400 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 text-xs space-y-1">
+              <div className="flex justify-between text-neutral-500">
+                <span>Invoice Number:</span>
+                <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200">{mpesaModalInvoice.orderNumber}</span>
+              </div>
+              <div className="flex justify-between text-neutral-500">
+                <span>Total Amount Due:</span>
+                <span className="font-mono font-bold text-emerald-600">KES {mpesaModalInvoice.amount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {mpesaStatus === 'confirmed' ? (
+              <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center space-y-2 text-xs">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <div className="font-bold text-emerald-900 dark:text-emerald-100">Payment Received &amp; Confirmed!</div>
+                <div className="font-mono text-neutral-600 dark:text-neutral-400 text-[11px]">
+                  M-Pesa Receipt: <strong>{mpesaReceipt}</strong>
+                </div>
+                <button
+                  onClick={() => setMpesaModalInvoice(null)}
+                  className="mt-2 px-4 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleMpesaPay} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-semibold text-neutral-700 dark:text-neutral-300 block mb-1">
+                    Safaricom Mobile Number (Kenya)
+                  </label>
+                  <input
+                    type="tel"
+                    value={mpesaPhone}
+                    onChange={(e) => setMpesaPhone(e.target.value)}
+                    placeholder="+254712345678"
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
+                  />
+                  <span className="text-[10px] text-neutral-400 block mt-1">
+                    An STK prompt will be sent to this phone asking to enter M-Pesa PIN.
+                  </span>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setMpesaModalInvoice(null)}
+                    className="px-3 py-1.5 rounded-lg border border-neutral-300 text-neutral-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={mpesaStatus === 'prompting'}
+                    className="px-4 py-2 rounded-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  >
+                    {mpesaStatus === 'prompting' ? 'Sending Prompt...' : 'Send M-Pesa Prompt'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          MODAL 3: PROOF REVISION REQUEST (Phase 2)
+      ────────────────────────────────────────────────────────── */}
+      {revisionModalOrder && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setRevisionModalOrder(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-[#14171d] rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-bold font-['Poppins'] text-neutral-900 dark:text-neutral-100">
+                  Request Artwork Proof Revision
+                </h3>
+                <p className="text-[11px] text-neutral-500">{revisionModalOrder.itemTitle} ({revisionModalOrder.orderNumber})</p>
+              </div>
+              <button onClick={() => setRevisionModalOrder(null)} className="text-neutral-400 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRevisionSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="font-semibold text-neutral-700 dark:text-neutral-300 block mb-1">
+                  Describe the requested adjustments
+                </label>
+                <textarea
+                  value={revisionFeedback}
+                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                  placeholder="e.g. Please enlarge the chest logo by 15% and verify Pantone 186 C red thread matching."
+                  rows={4}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-red-600"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setRevisionModalOrder(null)}
+                  className="px-3 py-1.5 rounded-lg border border-neutral-300 text-neutral-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg font-bold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                >
+                  Submit Revision Notes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
   );
 };
+

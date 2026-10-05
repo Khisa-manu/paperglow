@@ -65,7 +65,6 @@ export interface BrandingProduct {
   iconName: string;
 }
 
-// Backward-compatibility alias
 export type BrandingItem = BrandingProduct;
 
 export interface CartItem {
@@ -93,6 +92,20 @@ export interface ValuePillar {
   icon: string;
 }
 
+export interface OrganizationProfile {
+  id: number;
+  uuid: string;
+  name: string;
+  slug: string;
+  billingEmail: string;
+  phone: string;
+  taxId: string; // KRA PIN
+  city: string;
+  countyState: string;
+  countryCode: string; // 'KE'
+  preferredCurrency: string; // 'KES'
+}
+
 export interface CustomerProfile {
   id: string;
   name: string;
@@ -102,6 +115,7 @@ export interface CustomerProfile {
   role: string;
   twoFactorEnabled: boolean;
   joinedDate: string;
+  organization?: OrganizationProfile;
 }
 
 export interface SoftwareOrder {
@@ -112,6 +126,7 @@ export interface SoftwareOrder {
   tier: string;
   billingCadence: 'monthly' | 'annual';
   amount: number;
+  currency: string;
   status: 'Paid' | 'Processing' | 'Renewed';
 }
 
@@ -124,9 +139,25 @@ export interface MerchandiseOrder {
   quantity: number;
   specs: string;
   totalAmount: number;
+  currency: string;
   status: 'Proofing' | 'In Production' | 'Shipped' | 'Delivered';
   trackingNumber?: string;
   estimatedDelivery: string;
   artworkApproved: boolean;
   customNotes?: string;
+  proofVersion?: number;
+}
+
+export interface EntitlementItem {
+  id: number;
+  appSlug: string;
+  featureKey: string;
+  value: string;
+}
+
+export interface SSOAuthResult {
+  authCode: string;
+  appSlug: string;
+  redirectUri: string;
+  expiresInSeconds: number;
 }
