@@ -36,17 +36,49 @@ export interface BusinessApp {
   faqs: { question: string; answer: string }[];
 }
 
-export interface BrandingItem {
+export interface ProductVariation {
+  name: string;
+  options: string[];
+  defaultOption: string;
+}
+
+export interface BulkDiscountTier {
+  minQty: number;
+  discountPercent: number;
+  label: string;
+}
+
+export interface BrandingProduct {
   id: string;
   title: string;
-  category: string;
+  category: 'Creative Design' | 'Signage & Displays' | 'Custom Apparel' | 'Workwear & Uniforms' | 'Print Collateral' | 'Merchandise & Swag';
+  tagline: string;
   description: string;
-  materials: string;
-  startingPrice: string;
+  basePrice: number;
+  priceUnit: string;
+  minOrder: number;
   turnaround: string;
-  minOrder: string;
-  icon: string;
+  materials: string;
   specs: string[];
+  variations: ProductVariation[];
+  bulkDiscounts: BulkDiscountTier[];
+  iconName: string;
+}
+
+// Backward-compatibility alias
+export type BrandingItem = BrandingProduct;
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  title: string;
+  category: string;
+  unitPrice: number;
+  quantity: number;
+  selectedVariations: Record<string, string>;
+  customInstructions: string;
+  totalPrice: number;
+  addedAt: string;
 }
 
 export interface WorkflowStep {
@@ -59,4 +91,42 @@ export interface ValuePillar {
   title: string;
   description: string;
   icon: string;
+}
+
+export interface CustomerProfile {
+  id: string;
+  name: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  role: string;
+  twoFactorEnabled: boolean;
+  joinedDate: string;
+}
+
+export interface SoftwareOrder {
+  id: string;
+  orderNumber: string;
+  date: string;
+  appName: string;
+  tier: string;
+  billingCadence: 'monthly' | 'annual';
+  amount: number;
+  status: 'Paid' | 'Processing' | 'Renewed';
+}
+
+export interface MerchandiseOrder {
+  id: string;
+  orderNumber: string;
+  date: string;
+  itemTitle: string;
+  category: string;
+  quantity: number;
+  specs: string;
+  totalAmount: number;
+  status: 'Proofing' | 'In Production' | 'Shipped' | 'Delivered';
+  trackingNumber?: string;
+  estimatedDelivery: string;
+  artworkApproved: boolean;
+  customNotes?: string;
 }

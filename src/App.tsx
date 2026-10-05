@@ -4,38 +4,87 @@ import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
+import { AccountPage } from './pages/AccountPage';
+import { BrandingPage } from './pages/BrandingPage';
 import { AppDetailModal } from './components/AppDetailModal';
-import { BrandingModal } from './components/BrandingModal';
+import { ProductConfiguratorModal } from './components/ProductConfiguratorModal';
+import { CartDrawer } from './components/CartDrawer';
 import { AccountDashboardModal } from './components/AccountDashboardModal';
-import { APPLICATIONS_CATALOG } from './data/paperglowData';
-import { BusinessApp, BrandingItem } from './types';
+import {
+  APPLICATIONS_CATALOG,
+  BRANDING_PRODUCTS,
+  DEFAULT_CUSTOMER_PROFILE,
+  DEFAULT_SOFTWARE_ORDERS,
+  DEFAULT_MERCHANDISE_ORDERS,
+} from './data/paperglowData';
+import {
+  BusinessApp,
+  BrandingProduct,
+  CustomerProfile,
+  SoftwareOrder,
+  MerchandiseOrder,
+  CartItem,
+} from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding'>('home');
   const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-invoice');
+
+  // Customer Account & Authentication State
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    const saved = localStorage.getItem('paperglow_logged_in');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [customerProfile, setCustomerProfile] = useState<CustomerProfile>(() => {
+    const saved = localStorage.getItem('paperglow_customer_profile');
+    return saved ? JSON.parse(saved) : DEFAULT_CUSTOMER_PROFILE;
+  });
 
   const [subscribedAppIds, setSubscribedAppIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('paperglow_subscribed_apps');
     return saved ? JSON.parse(saved) : ['paperglow-invoice', 'paperglow-crm'];
   });
 
-  const [brandingInquiries, setBrandingInquiries] = useState<string[]>(() => {
-    const saved = localStorage.getItem('paperglow_branding_inquiries');
-    return saved ? JSON.parse(saved) : ['Custom Uniforms & Polos (50 units)'];
+  const [softwareOrders, setSoftwareOrders] = useState<SoftwareOrder[]>(() => {
+    const saved = localStorage.getItem('paperglow_software_orders');
+    return saved ? JSON.parse(saved) : DEFAULT_SOFTWARE_ORDERS;
   });
 
+  const [merchandiseOrders, setMerchandiseOrders] = useState<MerchandiseOrder[]>(() => {
+    const saved = localStorage.getItem('paperglow_merchandise_orders');
+    return saved ? JSON.parse(saved) : DEFAULT_MERCHANDISE_ORDERS;
+  });
+
+  // Shopping Cart & Product Customizer State
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    const saved = localStorage.getItem('paperglow_customization_cart');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedConfigProduct, setSelectedConfigProduct] = useState<BrandingProduct | null>(null);
   const [modalApp, setModalApp] = useState<BusinessApp | null>(null);
-  const [selectedBrandingItem, setSelectedBrandingItem] = useState<BrandingItem | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem('paperglow_theme_dark') === 'true';
   });
 
-  // URL Hash Synchronizer for scalable deep-linking
+  // URL Hash Synchronizer for deep-linking
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
+      if (hash === 'branding') {
+        setCurrentView('branding');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (hash === 'account') {
+        setCurrentView('account');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       if (hash.startsWith('app/')) {
         const id = hash.replace('app/', '');
         if (APPLICATIONS_CATALOG.some((a) => a.id === id)) {
@@ -61,6 +110,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Sync to local storage
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -71,26 +121,119 @@ export const App: React.FC = () => {
   }, [isDark]);
 
   useEffect(() => {
+    localStorage.setItem('paperglow_logged_in', isLoggedIn ? 'true' : 'false');
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    localStorage.setItem('paperglow_customer_profile', JSON.stringify(customerProfile));
+  }, [customerProfile]);
+
+  useEffect(() => {
     localStorage.setItem('paperglow_subscribed_apps', JSON.stringify(subscribedAppIds));
   }, [subscribedAppIds]);
 
   useEffect(() => {
-    localStorage.setItem('paperglow_branding_inquiries', JSON.stringify(brandingInquiries));
-  }, [brandingInquiries]);
+    localStorage.setItem('paperglow_software_orders', JSON.stringify(softwareOrders));
+  }, [softwareOrders]);
 
+  useEffect(() => {
+    localStorage.setItem('paperglow_merchandise_orders', JSON.stringify(merchandiseOrders));
+  }, [merchandiseOrders]);
+
+  useEffect(() => {
+    localStorage.setItem('paperglow_customization_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  // Auth Handlers
+  const handleLogin = (email: string, name?: string, company?: string) => {
+    setIsLoggedIn(true);
+    if (name || company) {
+      setCustomerProfile((prev) => ({
+        ...prev,
+        name: name || prev.name,
+        companyName: company || prev.companyName,
+        email: email,
+      }));
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
+  const handleUpdateProfile = (updated: Partial<CustomerProfile>) => {
+    setCustomerProfile((prev) => ({
+      ...prev,
+      ...updated,
+    }));
+  };
+
+  // Subscription Toggle Handler
   const toggleSubscription = (appId: string) => {
+    const app = APPLICATIONS_CATALOG.find((a) => a.id === appId);
     if (subscribedAppIds.includes(appId)) {
       setSubscribedAppIds(subscribedAppIds.filter((id) => id !== appId));
     } else {
       setSubscribedAppIds([...subscribedAppIds, appId]);
+      if (app) {
+        const newOrder: SoftwareOrder = {
+          id: `ord_sw_${Date.now()}`,
+          orderNumber: `PG-SW-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          appName: app.name,
+          tier: 'Professional Workspace',
+          billingCadence: 'monthly',
+          amount: app.monthlyPrice,
+          status: 'Paid',
+        };
+        setSoftwareOrders((prev) => [newOrder, ...prev]);
+      }
     }
   };
 
-  const handleInquirySubmitted = (itemName: string) => {
-    setBrandingInquiries((prev) => [`${itemName} Quote Request`, ...prev]);
-    setSelectedBrandingItem(null);
+  // Cart & Order Handlers
+  const handleAddToCart = (item: CartItem) => {
+    setCartItems((prev) => [item, ...prev]);
+    setIsCartOpen(true);
   };
 
+  const handleRemoveCartItem = (id: string) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleCheckoutCart = () => {
+    // Convert cart items into official MerchandiseOrder records
+    const newOrders: MerchandiseOrder[] = cartItems.map((item, idx) => ({
+      id: `ord_mc_${Date.now()}_${idx}`,
+      orderNumber: `PG-MC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      itemTitle: item.title,
+      category: item.category,
+      quantity: item.quantity,
+      specs: `${Object.entries(item.selectedVariations).map(([k, v]) => `${k}: ${v}`).join(' · ')} (${item.customInstructions})`,
+      totalAmount: item.totalPrice,
+      status: 'Proofing',
+      estimatedDelivery: '7–10 business days (Pending proof approval)',
+      artworkApproved: false,
+    }));
+
+    setMerchandiseOrders((prev) => [...newOrders, ...prev]);
+    setCartItems([]);
+    setIsCartOpen(false);
+    navigateAccount();
+  };
+
+  const handleApproveArtworkProof = (orderId: string) => {
+    setMerchandiseOrders((prev) =>
+      prev.map((ord) =>
+        ord.id === orderId
+          ? { ...ord, artworkApproved: true, status: 'In Production' }
+          : ord
+      )
+    );
+  };
+
+  // Navigation Handlers
   const navigateToSection = (sectionId: string) => {
     if (currentView !== 'home') {
       window.location.hash = 'home';
@@ -117,15 +260,23 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigateBranding = () => {
+    window.location.hash = 'branding';
+    setCurrentView('branding');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateAccount = () => {
+    window.location.hash = 'account';
+    setCurrentView('account');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const navigateToAppDetail = (appId: string) => {
     setSelectedAppId(appId);
     window.location.hash = `app/${appId}`;
     setCurrentView('application-detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleLaunchApp = (app: BusinessApp) => {
-    setIsAccountModalOpen(true);
   };
 
   const currentDetailApp =
@@ -136,12 +287,17 @@ export const App: React.FC = () => {
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
+        isLoggedIn={isLoggedIn}
+        userName={customerProfile.name}
         subscribedAppCount={subscribedAppIds.length}
+        cartCount={cartItems.length}
         isDark={isDark}
         toggleDarkMode={() => setIsDark(!isDark)}
-        onOpenAccount={() => setIsAccountModalOpen(true)}
+        onOpenAccount={navigateAccount}
+        onOpenCart={() => setIsCartOpen(true)}
         onNavigateHome={navigateHome}
         onNavigateApplications={navigateApplications}
+        onNavigateBranding={navigateBranding}
         onNavigateSection={navigateToSection}
       />
 
@@ -153,10 +309,11 @@ export const App: React.FC = () => {
             onToggleSubscription={toggleSubscription}
             onViewAppDetail={(app) => setModalApp(app)}
             onSelectAppDetail={navigateToAppDetail}
-            onViewBrandingDetail={(item) => setSelectedBrandingItem(item)}
-            onOpenAccount={() => setIsAccountModalOpen(true)}
+            onViewBrandingDetail={(item) => setSelectedConfigProduct(item)}
+            onOpenAccount={navigateAccount}
             onNavigateSection={navigateToSection}
             onNavigateToDirectory={navigateApplications}
+            onNavigateToBranding={navigateBranding}
           />
         )}
 
@@ -165,7 +322,7 @@ export const App: React.FC = () => {
             subscribedAppIds={subscribedAppIds}
             onToggleSubscription={toggleSubscription}
             onSelectAppDetail={navigateToAppDetail}
-            onLaunchApp={handleLaunchApp}
+            onLaunchApp={() => navigateAccount()}
             onNavigateHome={navigateHome}
           />
         )}
@@ -175,9 +332,37 @@ export const App: React.FC = () => {
             app={currentDetailApp}
             isSubscribed={subscribedAppIds.includes(currentDetailApp.id)}
             onToggleSubscription={toggleSubscription}
-            onLaunchApp={handleLaunchApp}
+            onLaunchApp={() => navigateAccount()}
             onBackToDirectory={navigateApplications}
-            onOpenAccount={() => setIsAccountModalOpen(true)}
+            onOpenAccount={navigateAccount}
+          />
+        )}
+
+        {currentView === 'branding' && (
+          <BrandingPage
+            cartCount={cartItems.length}
+            onOpenCart={() => setIsCartOpen(true)}
+            onSelectProduct={(product) => setSelectedConfigProduct(product)}
+            onNavigateHome={navigateHome}
+          />
+        )}
+
+        {currentView === 'account' && (
+          <AccountPage
+            isLoggedIn={isLoggedIn}
+            profile={customerProfile}
+            apps={APPLICATIONS_CATALOG}
+            subscribedAppIds={subscribedAppIds}
+            softwareOrders={softwareOrders}
+            merchandiseOrders={merchandiseOrders}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+            onUpdateProfile={handleUpdateProfile}
+            onToggleSubscription={toggleSubscription}
+            onApproveArtworkProof={handleApproveArtworkProof}
+            onLaunchApp={() => navigateAccount()}
+            onNavigateHome={navigateHome}
+            onNavigateToDirectory={navigateApplications}
           />
         )}
       </main>
@@ -185,10 +370,10 @@ export const App: React.FC = () => {
       {/* Footer */}
       <Footer
         onNavigateSection={navigateToSection}
-        onOpenAccount={() => setIsAccountModalOpen(true)}
+        onOpenAccount={navigateAccount}
       />
 
-      {/* Quick Preview Modal */}
+      {/* Software Quick Preview Modal */}
       <AppDetailModal
         app={modalApp}
         isSubscribed={modalApp ? subscribedAppIds.includes(modalApp.id) : false}
@@ -196,11 +381,20 @@ export const App: React.FC = () => {
         onClose={() => setModalApp(null)}
       />
 
-      {/* Merchandise Inquiry Modal */}
-      <BrandingModal
-        item={selectedBrandingItem}
-        onClose={() => setSelectedBrandingItem(null)}
-        onInquirySubmitted={handleInquirySubmitted}
+      {/* Merchandise Product Configurator Modal */}
+      <ProductConfiguratorModal
+        product={selectedConfigProduct}
+        onClose={() => setSelectedConfigProduct(null)}
+        onAddToCart={handleAddToCart}
+      />
+
+      {/* Customization Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        onRemoveItem={handleRemoveCartItem}
+        onCheckout={handleCheckoutCart}
       />
 
       {/* Central Account Dashboard Modal */}
@@ -210,7 +404,7 @@ export const App: React.FC = () => {
         apps={APPLICATIONS_CATALOG}
         subscribedAppIds={subscribedAppIds}
         onToggleSubscription={toggleSubscription}
-        brandingInquiries={brandingInquiries}
+        brandingInquiries={merchandiseOrders.map((o) => `${o.itemTitle} (${o.quantity} units)`)}
         onExploreApps={navigateApplications}
       />
     </div>

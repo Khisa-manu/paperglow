@@ -3,64 +3,102 @@
 @layer base {
   :root {
     --color-base: #ffffff;
-    --color-surface: #f9fafb;
-    --color-surface-hover: #f3f4f6;
-    --color-contrast: #111827;
-    --color-muted: #6b7280;
-    --color-divider: #e5e7eb;
+    --color-surface: #f8fafc;
+    --color-surface-hover: #f1f5f9;
+    --color-contrast: #090a0f;
+    --color-muted: #525866;
+    --color-divider: #e2e8f0;
     
-    /* Paperglow Red brand signature */
+    /* Paperglow Signature Red */
     --color-primary: #dc2626;
     --color-primary-hover: #b91c1c;
     --color-primary-light: #fef2f2;
     --color-primary-dark: #991b1b;
 
-    --color-border: #e5e7eb;
+    --color-border: #e2e8f0;
+    --color-border-subtle: #edf2f7;
     --color-card-bg: #ffffff;
   }
 
   .dark {
-    --color-base: #0f1115;
-    --color-surface: #16181d;
-    --color-surface-hover: #1f232b;
-    --color-contrast: #f9fafb;
-    --color-muted: #9ca3af;
-    --color-divider: #262a33;
+    --color-base: #0b0d11;
+    --color-surface: #12151b;
+    --color-surface-hover: #191d26;
+    --color-contrast: #f8fafc;
+    --color-muted: #8b949e;
+    --color-divider: #21262d;
     
     --color-primary: #ef4444;
     --color-primary-hover: #dc2626;
-    --color-primary-light: rgba(239, 68, 68, 0.12);
+    --color-primary-light: rgba(239, 68, 68, 0.1);
     --color-primary-dark: #991b1b;
 
-    --color-border: #262a33;
-    --color-card-bg: #14171d;
+    --color-border: #21262d;
+    --color-border-subtle: #1b1f27;
+    --color-card-bg: #11141a;
   }
 
   body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--color-base);
     color: var(--color-contrast);
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.028em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Strict numbers alignment */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Crisp button and border utilities */
-.paperglow-card {
+/* Crisp 1px border architecture (Anti-slop) */
+.paperglow-panel {
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: 0.625rem;
 }
 
-.paperglow-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.75rem;
+.paperglow-panel:hover {
+  border-color: #cbd5e1;
+}
+
+.dark .paperglow-panel:hover {
+  border-color: #30363d;
+}
+
+/* Subtle hairline divider */
+.hairline-b {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.hairline-t {
+  border-top: 1px solid var(--color-border);
+}
+
+.hairline-r {
+  border-right: 1px solid var(--color-border);
+}
+
+.hairline-l {
+  border-left: 1px solid var(--color-border);
+}
+
+/* Solid red action button without excess blur or gradient */
+.btn-primary-red {
+  background-color: #dc2626;
+  color: #ffffff;
   font-weight: 600;
-  line-height: 1;
-  color: var(--color-primary);
+  transition: background-color 140ms ease-in-out;
+}
+
+.btn-primary-red:hover {
+  background-color: #b91c1c;
 }

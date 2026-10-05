@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Menu, X, User } from 'lucide-react';
+import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding';
+  isLoggedIn: boolean;
+  userName?: string;
   subscribedAppCount: number;
+  cartCount: number;
   isDark: boolean;
   toggleDarkMode: () => void;
   onOpenAccount: () => void;
+  onOpenCart: () => void;
   onNavigateHome: () => void;
   onNavigateApplications: () => void;
+  onNavigateBranding: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
+  isLoggedIn,
+  userName,
   subscribedAppCount,
+  cartCount,
   isDark,
   toggleDarkMode,
   onOpenAccount,
+  onOpenCart,
   onNavigateHome,
   onNavigateApplications,
+  onNavigateBranding,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -75,16 +85,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               Applications Directory
             </button>
             <button
+              onClick={onNavigateBranding}
+              className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer ${
+                currentView === 'branding' ? 'text-red-600 dark:text-red-500 font-semibold' : ''
+              }`}
+            >
+              Branding &amp; Customization
+            </button>
+            <button
               onClick={() => onNavigateSection('account')}
               className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
             >
               One Account
-            </button>
-            <button
-              onClick={() => onNavigateSection('branding')}
-              className="hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer"
-            >
-              Branding &amp; Customization
             </button>
             <button
               onClick={() => onNavigateSection('how-it-works')}
@@ -111,14 +123,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            {/* Paperglow Account Button */}
+            {/* Shopping Cart Button */}
+            <button
+              onClick={onOpenCart}
+              className="relative p-2 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="View Customization Cart"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white font-bold text-[9px] flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Paperglow Customer Account Button */}
             <button
               onClick={onOpenAccount}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer"
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer ${
+                currentView === 'account'
+                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
             >
               <User className="w-3.5 h-3.5" />
               <span>
-                {subscribedAppCount > 0 ? `My Account (${subscribedAppCount} Apps)` : 'My Account'}
+                {isLoggedIn
+                  ? `Account (${subscribedAppCount} Apps)`
+                  : 'Sign In / Account'}
               </span>
             </button>
 
@@ -157,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onNavigateSection('branding');
+                  onNavigateBranding();
                   setIsMobileMenuOpen(false);
                 }}
                 className="text-left px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
@@ -173,7 +205,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 How It Works
               </button>
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col space-y-2">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenCart();
+                  }}
+                  className="w-full py-2 text-center text-xs font-semibold rounded-lg border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 flex items-center justify-center space-x-1"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>Customization Cart ({cartCount})</span>
+                </button>
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
@@ -181,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                   className="w-full py-2.5 text-center text-xs font-semibold rounded-lg bg-red-600 text-white"
                 >
-                  Access Paperglow Account
+                  {isLoggedIn ? 'Manage Paperglow Account' : 'Sign In / Register'}
                 </button>
               </div>
             </div>
