@@ -5,7 +5,7 @@ import { sendSuccess } from '../utils/response';
 export const healthController = {
   check(req: Request, res: Response) {
     const dbHealth = getDbHealth();
-    const isHealthy = dbHealth.status === 'connected' || dbHealth.status === 'local_storage_active';
+    const isHealthy = dbHealth.status === 'connected' || dbHealth.status === 'mariadb_engine_ready';
 
     const healthData = {
       status: isHealthy ? 'healthy' : 'degraded',

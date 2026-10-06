@@ -23,12 +23,9 @@ export async function requireOrgContext(req: AuthenticatedRequest, res: Response
 
     if (!requestedOrgId) {
       // Look up any membership for user
-      let memberships = await dbService.find('organization_members', { user_id: req.user.userId, status: 'active' });
-      if (memberships.length === 0) {
-        memberships = await dbService.find('members', { userId: req.user.userId, status: 'active' });
-      }
+      const memberships = await dbService.find('organization_members', { user_id: req.user.userId, status: 'active' });
       if (memberships.length > 0) {
-        requestedOrgId = Number(memberships[0].organization_id || memberships[0].organizationId);
+        requestedOrgId = Number(memberships[0].organization_id);
       }
     }
 
@@ -42,14 +39,6 @@ export async function requireOrgContext(req: AuthenticatedRequest, res: Response
       user_id: req.user.userId,
       status: 'active',
     });
-
-    if (!membership) {
-      membership = await dbService.findOne('members', {
-        organizationId: requestedOrgId,
-        userId: req.user.userId,
-        status: 'active',
-      });
-    }
 
     // Also check if requestedOrgId matches token organizationId
     if (!membership && req.user.organizationId === requestedOrgId) {

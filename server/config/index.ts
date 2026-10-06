@@ -30,8 +30,4 @@ export const config = {
     dir: process.env.STORAGE_DIR ? path.resolve(rootDir, process.env.STORAGE_DIR) : path.join(rootDir, 'uploads'),
     maxFileSize: 50 * 1024 * 1024, // 50MB
   },
-
-  // Fallback persistent state directory
-  dataDir: path.join(rootDir, 'data'),
-  dbFilePath: path.join(rootDir, 'data', 'paperglow_db.json'),
 };

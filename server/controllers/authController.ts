@@ -164,19 +164,15 @@ export const authController = {
       }
 
       // Find user's organizations
-      let memberships = await dbService.find('organization_members', { user_id: user.id, status: 'active' });
-      if (memberships.length === 0) {
-        memberships = await dbService.find('members', { userId: user.id, status: 'active' });
-      }
+      const memberships = await dbService.find('organization_members', { user_id: user.id, status: 'active' });
       let currentOrg: any = null;
       let roleName = 'owner';
 
       if (memberships.length > 0) {
         const firstMembership = memberships[0];
-        const orgId = firstMembership.organization_id || firstMembership.organizationId;
-        currentOrg = await dbService.findById('organizations', orgId);
+        currentOrg = await dbService.findById('organizations', firstMembership.organization_id);
         const role = firstMembership.role_id ? await dbService.findById('roles', firstMembership.role_id) : null;
-        roleName = role?.name || firstMembership.role_name || firstMembership.roleName || 'owner';
+        roleName = role?.name || firstMembership.role_name || 'owner';
       }
 
       if (!currentOrg && (user.defaultOrganizationId || user.default_organization_id)) {
@@ -240,20 +236,16 @@ export const authController = {
       }
 
       // Load all organizations user belongs to
-      let memberships = await dbService.find('organization_members', { user_id: user.id, status: 'active' });
-      if (memberships.length === 0) {
-        memberships = await dbService.find('members', { userId: user.id, status: 'active' });
-      }
+      const memberships = await dbService.find('organization_members', { user_id: user.id, status: 'active' });
       const organizations = [];
 
       for (const m of memberships) {
-        const orgId = m.organization_id || m.organizationId;
-        const org = await dbService.findById('organizations', orgId);
+        const org = await dbService.findById('organizations', m.organization_id);
         if (org) {
           const role = m.role_id ? await dbService.findById('roles', m.role_id) : null;
           organizations.push({
             ...org,
-            role: role?.name || m.role_name || m.roleName || 'owner',
+            role: role?.name || m.role_name || 'owner',
           });
         }
       }
