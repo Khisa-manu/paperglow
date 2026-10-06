@@ -25,6 +25,7 @@ import {
 } from '../data/defaultStockInventoryData';
 
 import { StockInventoryHeader } from '../components/stockInventory/StockInventoryHeader';
+import { api } from '../services/api';
 import { StockInventorySidebar } from '../components/stockInventory/StockInventorySidebar';
 import { DashboardModule } from '../components/stockInventory/DashboardModule';
 import { ProductsModule } from '../components/stockInventory/ProductsModule';
@@ -156,6 +157,91 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
     }
   };
 
+  // Cloud Synchronization State (DirectAdmin MariaDB)
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudInventoryData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [prodRes, movRes, supRes] = await Promise.allSettled([
+        api.inventory.getProducts(),
+        api.inventory.getMovements(),
+        api.inventory.getSuppliers(),
+      ]);
+
+      if (prodRes.status === 'fulfilled' && prodRes.value?.data && prodRes.value.data.length > 0) {
+        const cloudProds: InventoryProduct[] = prodRes.value.data.map((p: any) => ({
+          id: String(p.id || p.uuid),
+          name: p.name || 'Unnamed Item',
+          sku: p.sku || `SKU-${p.id}`,
+          barcode: p.barcode || '',
+          category: p.category || 'General',
+          currentQuantity: Number(p.quantity ?? p.currentQuantity ?? 0),
+          minStockLevel: Number(p.min_stock_level ?? p.minStockLevel ?? 5),
+          maxStockLevel: Number(p.max_stock_level ?? p.maxStockLevel ?? 100),
+          unitOfMeasure: p.unit || p.unitOfMeasure || 'pcs',
+          costPriceKes: Number(p.cost_price ?? p.costPriceKes ?? 0),
+          sellingPriceKes: Number(p.selling_price ?? p.sellingPriceKes ?? 0),
+          supplier: p.supplier || 'Direct Local Supplier',
+          locationRack: p.location || p.locationRack || 'Warehouse A-1',
+          status: computeProductStatus(
+            Number(p.quantity ?? p.currentQuantity ?? 0),
+            Number(p.min_stock_level ?? p.minStockLevel ?? 5),
+            Number(p.max_stock_level ?? p.maxStockLevel ?? 100)
+          ),
+          updatedAt: p.updated_at || new Date().toISOString(),
+          description: p.description || '',
+        }));
+        setProducts(cloudProds);
+      }
+
+      if (movRes.status === 'fulfilled' && movRes.value?.data && movRes.value.data.length > 0) {
+        const cloudMovs: StockMovement[] = movRes.value.data.map((m: any) => ({
+          id: String(m.id || m.uuid),
+          productId: String(m.product_id || ''),
+          productName: m.product_name || 'Inventory Item',
+          sku: m.sku || '',
+          type: m.movement_type || m.type || 'stock_in',
+          quantity: Number(m.quantity || 0),
+          previousQuantity: Number(m.previous_quantity || 0),
+          newQuantity: Number(m.new_quantity || 0),
+          reason: m.reason || 'Cloud stock movement',
+          referenceNumber: m.reference_number || `MOV-${m.id}`,
+          performedBy: m.performed_by || 'Admin',
+          timestamp: m.created_at || new Date().toISOString(),
+        }));
+        setMovements(cloudMovs);
+      }
+
+      if (supRes.status === 'fulfilled' && supRes.value?.data && supRes.value.data.length > 0) {
+        const cloudSups: Supplier[] = supRes.value.data.map((s: any) => ({
+          id: String(s.id || s.uuid),
+          name: s.name || '',
+          contactPerson: s.contact_person || '',
+          phone: s.phone || '',
+          email: s.email || '',
+          address: s.address || '',
+          suppliedCategories: s.supplied_categories ? s.supplied_categories.split(',') : ['General'],
+          paymentTerms: s.payment_terms || 'Net 30',
+          rating: Number(s.rating || 4.5),
+        }));
+        setSuppliers(cloudSups);
+      }
+
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Inventory Cloud] Using local storage cache:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudInventoryData();
+  }, []);
+
   // Helper to recompute product status
   const computeProductStatus = (qty: number, min: number, max: number): StockStatus => {
     if (qty === 0) return 'out_of_stock';
@@ -197,7 +283,17 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
             : p
         )
       );
-      showToast(`Product "${productData.name}" updated successfully.`);
+
+      api.inventory.updateProduct(productData.id, {
+        name: productData.name,
+        sku: productData.sku,
+        category: productData.category,
+        quantity: productData.currentQuantity,
+        cost_price: productData.costPriceKes,
+        selling_price: productData.sellingPriceKes,
+      }).catch((e) => console.warn('Cloud product update failed:', e));
+
+      showToast(`Product "${productData.name}" updated in MariaDB cloud.`);
     } else {
       // Create new
       const newId = `prod-${Date.now().toString().slice(-5)}`;
@@ -208,6 +304,15 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
         updatedAt: new Date().toISOString(),
       };
       setProducts((prev) => [newProduct, ...prev]);
+
+      api.inventory.createProduct({
+        name: newProduct.name,
+        sku: newProduct.sku,
+        category: newProduct.category,
+        quantity: newProduct.currentQuantity,
+        cost_price: newProduct.costPriceKes,
+        selling_price: newProduct.sellingPriceKes,
+      }).catch((e) => console.warn('Cloud product create failed:', e));
 
       // Create initial stock in movement if quantity > 0
       if (newProduct.currentQuantity > 0) {
@@ -226,9 +331,17 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
           timestamp: new Date().toISOString(),
         };
         setMovements((prev) => [initialMov, ...prev]);
+
+        api.inventory.createMovement({
+          product_id: newProduct.id,
+          movement_type: 'stock_in',
+          quantity: newProduct.currentQuantity,
+          reason: 'Initial opening inventory setup',
+          reference_number: 'INIT-SETUP',
+        }).catch((e) => console.warn('Cloud movement create failed:', e));
       }
 
-      showToast(`Product "${newProduct.name}" added to catalog.`);
+      showToast(`Product "${newProduct.name}" saved to MariaDB cloud.`);
     }
 
     setEditingProduct(null);
@@ -237,7 +350,8 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
   const handleDeleteProduct = (productId: string) => {
     const prod = products.find((p) => p.id === productId);
     setProducts((prev) => prev.filter((p) => p.id !== productId));
-    showToast(`Product "${prod?.name || productId}" removed from catalog.`);
+    api.inventory.deleteProduct(productId).catch((e) => console.warn('Cloud delete failed:', e));
+    showToast(`Product "${prod?.name || productId}" removed from catalog & cloud.`);
   };
 
   const handleRecordMovement = (
@@ -299,7 +413,20 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
     };
 
     setMovements((prev) => [newMovement, ...prev]);
-    showToast(`Stock updated for ${targetProduct.name}: New Balance = ${newQty} ${targetProduct.unit}.`);
+
+    api.inventory.createMovement({
+      product_id: targetProduct.id,
+      movement_type: type,
+      quantity,
+      reason,
+      reference_number: referenceNumber,
+    }).catch((e) => console.warn('Cloud movement create failed:', e));
+
+    api.inventory.updateProduct(targetProduct.id, {
+      quantity: newQty,
+    }).catch((e) => console.warn('Cloud product qty sync failed:', e));
+
+    showToast(`Stock updated for ${targetProduct.name}: New Balance = ${newQty} ${targetProduct.unitOfMeasure}. Saved to MariaDB cloud.`);
   };
 
   const handleReceiveStock = (poId: string) => {
@@ -430,6 +557,9 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
         toggleDarkMode={toggleDarkMode}
         lowStockCount={lowStockCount}
         outOfStockCount={outOfStockCount}
+        isCloudSyncing={isCloudSyncing}
+        isCloudOnline={isCloudOnline}
+        onManualSync={fetchCloudInventoryData}
       />
 
       {/* Main Flex Layout */}

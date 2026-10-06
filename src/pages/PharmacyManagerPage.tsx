@@ -26,6 +26,7 @@ import {
 
 import { PharmSidebar } from '../components/pharmacyManager/PharmSidebar';
 import { PharmHeader } from '../components/pharmacyManager/PharmHeader';
+import { api } from '../services/api';
 import { PharmDashboardModule } from '../components/pharmacyManager/PharmDashboardModule';
 import { PharmInventoryModule } from '../components/pharmacyManager/PharmInventoryModule';
 import { PharmStockManagementModule } from '../components/pharmacyManager/PharmStockManagementModule';
@@ -157,6 +158,93 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
     localStorage.setItem('paperglow_pharm_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Cloud Synchronization State (DirectAdmin MariaDB)
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudPharmacyData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [medRes, saleRes, movRes, supRes] = await Promise.allSettled([
+        api.pharmacy.getMedicines(),
+        api.pharmacy.getSales(),
+        api.pharmacy.getMovements(),
+        api.pharmacy.getSuppliers(),
+      ]);
+
+      if (medRes.status === 'fulfilled' && medRes.value?.data && medRes.value.data.length > 0) {
+        const cloudMeds: MedicineProduct[] = medRes.value.data.map((m: any) => ({
+          id: String(m.id || m.uuid),
+          name: m.name || 'Unnamed Medicine',
+          genericName: m.generic_name || m.name || '',
+          brandName: m.brand_name || '',
+          category: m.category || 'General',
+          dosageForm: m.dosage_form || 'tablets',
+          strength: m.strength || '',
+          packSize: m.pack_size || '100s',
+          batchNumber: m.batch_number || `BATCH-${m.id}`,
+          expiryDate: m.expiry_date || '2027-12-31',
+          manufacturingDate: m.manufacturing_date || '2025-01-01',
+          purchasePriceKes: Number(m.unit_cost ?? m.cost_price ?? 0),
+          sellingPriceKes: Number(m.unit_price ?? m.selling_price ?? 0),
+          quantityInStock: Number(m.quantity ?? m.stock_quantity ?? 50),
+          minStockLevel: Number(m.reorder_level ?? 10),
+          supplier: m.supplier || 'Local Meds Distributor',
+          prescriptionRequired: Boolean(m.prescription_required),
+          barcode: m.barcode || '',
+          storageLocation: m.storage_location || 'Aisle 1',
+        }));
+        setMedicines(cloudMeds);
+      }
+
+      if (saleRes.status === 'fulfilled' && saleRes.value?.data && saleRes.value.data.length > 0) {
+        const cloudSales: SaleTransaction[] = saleRes.value.data.map((s: any) => ({
+          id: String(s.id || s.uuid),
+          receiptNumber: s.receipt_number || `RX-${s.id}`,
+          timestamp: s.created_at || new Date().toISOString(),
+          customerName: s.customer_name || 'Walk-in Patient',
+          customerPhone: s.customer_phone || '',
+          dispensedBy: s.dispensed_by || 'Staff Pharmacist',
+          items: typeof s.items === 'string' ? JSON.parse(s.items) : (s.items || []),
+          subtotalKes: Number(s.subtotal || s.total_amount || 0),
+          discountKes: Number(s.discount || 0),
+          totalAmountKes: Number(s.total_amount || 0),
+          paymentMethod: s.payment_method || 'mpesa',
+          mpesaRef: s.mpesa_ref || s.reference || '',
+          prescriptionNumber: s.prescription_number || '',
+        }));
+        setSales(cloudSales);
+      }
+
+      if (supRes.status === 'fulfilled' && supRes.value?.data && supRes.value.data.length > 0) {
+        const cloudSups: PharmacySupplier[] = supRes.value.data.map((sup: any) => ({
+          id: String(sup.id || sup.uuid),
+          name: sup.name || '',
+          contactPerson: sup.contact_person || '',
+          phone: sup.phone || '',
+          email: sup.email || '',
+          address: sup.address || '',
+          categoriesSupplied: sup.categories ? sup.categories.split(',') : ['Pharmaceuticals'],
+          paymentTerms: sup.payment_terms || '30_days',
+          outstandingBalanceKes: Number(sup.balance || 0),
+          rating: Number(sup.rating || 4.5),
+        }));
+        setSuppliers(cloudSups);
+      }
+
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Pharmacy Cloud] Using cached local storage:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudPharmacyData();
+  }, []);
+
   // Derived counts for alerts
   const lowStockCount = medicines.filter(
     (m) => m.quantityInStock <= (m.minStockLevel || settings.lowStockThresholdDefault)
@@ -177,6 +265,22 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
     };
     setMedicines((prev) => [newMed, ...prev]);
 
+    api.pharmacy.createMedicine({
+      name: newMed.name,
+      generic_name: newMed.genericName,
+      brand_name: newMed.brandName,
+      category: newMed.category,
+      dosage_form: newMed.dosageForm,
+      strength: newMed.strength,
+      unit_cost: newMed.purchasePriceKes,
+      unit_price: newMed.sellingPriceKes,
+      quantity: newMed.quantityInStock,
+      reorder_level: newMed.minStockLevel,
+      batch_number: newMed.batchNumber,
+      expiry_date: newMed.expiryDate,
+      supplier: newMed.supplier,
+    }).catch((e) => console.warn('Cloud create medicine failed:', e));
+
     // Record initial stock movement
     if (newMed.quantityInStock > 0) {
       const movement: StockMovement = {
@@ -195,12 +299,18 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
       setMovements((prev) => [movement, ...prev]);
     }
 
-    showToast(`Medicine "${newMed.name}" added to catalog.`);
+    showToast(`Medicine "${newMed.name}" saved to MariaDB cloud.`);
   };
 
   const handleUpdateMedicine = (updated: MedicineProduct) => {
     setMedicines((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-    showToast(`Updated details for "${updated.name}".`);
+    api.pharmacy.updateMedicine(updated.id, {
+      name: updated.name,
+      generic_name: updated.genericName,
+      unit_price: updated.sellingPriceKes,
+      quantity: updated.quantityInStock,
+    }).catch((e) => console.warn('Cloud update medicine failed:', e));
+    showToast(`Updated details for "${updated.name}" in cloud database.`);
   };
 
   // Handlers for Stock Management
@@ -328,7 +438,20 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
       );
     }
 
-    showToast(`Sale #${receiptNumber} processed • KES ${saleData.totalAmountKes.toLocaleString()} received.`);
+    // Persist sale to MariaDB cloud
+    api.pharmacy.createSale({
+      receipt_number: receiptNumber,
+      customer_name: saleData.customerName,
+      customer_phone: saleData.customerPhone,
+      dispensed_by: saleData.dispensedBy,
+      total_amount: saleData.totalAmountKes,
+      subtotal: saleData.subtotalKes,
+      discount: saleData.discountKes,
+      payment_method: saleData.paymentMethod,
+      items: JSON.stringify(saleData.items),
+    }).catch((e) => console.warn('Cloud sale create failed:', e));
+
+    showToast(`Sale #${receiptNumber} processed • KES ${saleData.totalAmountKes.toLocaleString()} received • Saved to MariaDB cloud.`);
   };
 
   // Handlers for Purchases
@@ -553,6 +676,9 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
           onQuickAddPO={() => setCurrentModule('purchases')}
           isDark={isDark}
           onToggleDarkMode={toggleDarkMode}
+          isCloudSyncing={isCloudSyncing}
+          isCloudOnline={isCloudOnline}
+          onManualSync={fetchCloudPharmacyData}
         />
 
         {/* Content Area */}

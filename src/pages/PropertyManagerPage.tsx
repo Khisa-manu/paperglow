@@ -36,6 +36,8 @@ import { PMMaintenanceModule } from '../components/propertyManager/PMMaintenance
 import { PMExpensesModule } from '../components/propertyManager/PMExpensesModule';
 import { PMReportsModule } from '../components/propertyManager/PMReportsModule';
 import { PMNotificationsModule } from '../components/propertyManager/PMNotificationsModule';
+import { api } from '../services/api';
+import { CloudSyncIndicator } from '../components/ui/CloudSyncIndicator';
 
 interface PropertyManagerPageProps {
   onBackToDirectory?: () => void;
@@ -140,6 +142,84 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
     localStorage.setItem('paperglow_pm_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  // Cloud Synchronization State
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudPropertyData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [propRes, tenRes, rentRes, mntRes, expRes] = await Promise.allSettled([
+        api.property.getProperties(),
+        api.property.getTenants(),
+        api.property.getRentPayments(),
+        api.property.getMaintenance(),
+        api.property.getExpenses(),
+      ]);
+
+      if (propRes.status === 'fulfilled' && propRes.value?.data && propRes.value.data.length > 0) {
+        const cloudProps = propRes.value.data.map((p: any) => ({
+          id: String(p.id || p.uuid),
+          name: p.name || 'Estate Property',
+          type: p.property_type || p.type || 'residential',
+          address: p.location || p.address || 'Nairobi',
+          city: p.county || p.city || 'Nairobi',
+          totalUnits: Number(p.total_units || 10),
+          imageUrl: p.image_url || '/assets/images/studio-1.webp',
+          notes: p.notes || '',
+        }));
+        setProperties(cloudProps);
+      }
+
+      if (tenRes.status === 'fulfilled' && tenRes.value?.data && tenRes.value.data.length > 0) {
+        const cloudTenants = tenRes.value.data.map((t: any) => ({
+          id: String(t.id || t.uuid),
+          propertyId: String(t.property_id || properties[0]?.id || 'prop-1'),
+          unitId: String(t.unit_id || 'unit-1'),
+          name: t.full_name || t.name || 'Tenant',
+          email: t.email || '',
+          phone: t.phone || '',
+          nationalId: t.national_id || '',
+          emergencyContact: t.emergency_contact || '',
+          moveInDate: t.lease_start || new Date().toISOString().split('T')[0],
+          monthlyRentKes: Number(t.rent_amount || 45000),
+          depositPaidKes: Number(t.deposit_paid || 45000),
+          balanceKes: Number(t.balance || 0),
+          status: 'active',
+        }));
+        setTenants(cloudTenants);
+      }
+
+      if (rentRes.status === 'fulfilled' && rentRes.value?.data && rentRes.value.data.length > 0) {
+        const cloudPayments = rentRes.value.data.map((r: any) => ({
+          id: String(r.id || r.uuid),
+          tenantId: String(r.tenant_id || ''),
+          propertyId: String(r.property_id || ''),
+          unitId: String(r.unit_id || ''),
+          amountKes: Number(r.amount || 0),
+          paymentDate: r.payment_date || new Date().toISOString().split('T')[0],
+          periodMonth: r.period_month || 'Current',
+          paymentMethod: r.payment_method || 'M-Pesa',
+          referenceCode: r.reference || `REF-${r.id}`,
+          receiptNumber: r.reference || `RCT-${r.id}`,
+          status: 'verified',
+        }));
+        setPayments(cloudPayments);
+      }
+
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Property Cloud] Using offline cache:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudPropertyData();
+  }, []);
+
   // Dark mode handler
   const handleToggleDarkMode = () => {
     const nextDark = !isDark;
@@ -158,6 +238,15 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
     const id = `prop-${Date.now()}`;
     const property: Property = { ...newProp, id };
     setProperties([property, ...properties]);
+
+    api.property.createProperty({
+      name: newProp.name,
+      property_type: newProp.type,
+      location: newProp.address,
+      county: newProp.city,
+      total_units: newProp.totalUnits,
+    }).catch(() => {});
+
     showToast(`Property "${newProp.name}" added to estate portfolio!`);
   };
 
@@ -209,6 +298,15 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
     };
     setLeases([newLease, ...leases]);
 
+    api.property.createTenant({
+      full_name: newTenant.name,
+      phone: newTenant.phone,
+      email: newTenant.email,
+      national_id: newTenant.nationalId,
+      rent_amount: newTenant.monthlyRentKes,
+      lease_start: newTenant.moveInDate,
+    }).catch(() => {});
+
     showToast(`Tenant "${newTenant.name}" registered and assigned to unit.`);
   };
 
@@ -233,6 +331,14 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
         return t;
       })
     );
+
+    api.property.createRentPayment({
+      tenant_id: payment.tenantId,
+      amount: payment.amountKes,
+      payment_date: payment.paymentDate,
+      payment_method: payment.paymentMethod,
+      reference: receiptNumber,
+    }).catch(() => {});
 
     showToast(
       `Rent payment of KES ${payment.amountKes.toLocaleString()} recorded. Receipt: ${receiptNumber}`
@@ -261,6 +367,14 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       propertyId: ticket.propertyId,
     };
     setNotifications([notif, ...notifications]);
+
+    api.property.createMaintenance({
+      title: newTicket.title,
+      description: newTicket.description,
+      category: newTicket.category,
+      priority: newTicket.priority,
+      status: newTicket.status,
+    }).catch(() => {});
 
     showToast(`Maintenance ticket ${ticketNumber} logged and assigned.`);
   };
@@ -296,6 +410,14 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       voucherNumber,
     };
     setExpenses([newExp, ...expenses]);
+
+    api.property.createExpense({
+      category: expense.category,
+      amount: expense.amountKes,
+      description: expense.description,
+      date: expense.date,
+    }).catch(() => {});
+
     showToast(`Expense voucher ${voucherNumber} recorded.`);
   };
 
@@ -406,6 +528,15 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <span className="text-xs text-neutral-500 font-mono">WORKSPACE: PAPERGLOW-PROPERTY-MANAGER</span>
+            <CloudSyncIndicator
+              appName="Property Manager"
+              isSyncing={isCloudSyncing}
+              isOnline={isCloudOnline}
+              onManualSync={fetchCloudPropertyData}
+            />
+          </div>
           {currentModule === 'dashboard' && (
             <PMDashboardModule
               properties={properties}

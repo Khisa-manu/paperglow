@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { StaffMember, TicketNotification } from '../../types/ticketing';
+import { CloudSyncIndicator } from '../ui/CloudSyncIndicator';
 
 interface TicketingHeaderProps {
   currentModule: string;
@@ -29,6 +30,9 @@ interface TicketingHeaderProps {
   onBackToPortal: () => void;
   isDark: boolean;
   toggleDarkMode: () => void;
+  isCloudSyncing?: boolean;
+  isCloudOnline?: boolean;
+  onManualSync?: () => void;
 }
 
 export const TicketingHeader: React.FC<TicketingHeaderProps> = ({
@@ -46,6 +50,9 @@ export const TicketingHeader: React.FC<TicketingHeaderProps> = ({
   onBackToPortal,
   isDark,
   toggleDarkMode,
+  isCloudSyncing,
+  isCloudOnline,
+  onManualSync,
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
@@ -107,6 +114,13 @@ export const TicketingHeader: React.FC<TicketingHeaderProps> = ({
 
       {/* Right Area: Actions, SLA Health, Notifications, Staff & Dark Mode */}
       <div className="flex items-center space-x-2 sm:space-x-3">
+        <CloudSyncIndicator
+          appName="Ticketing System"
+          isSyncing={isCloudSyncing}
+          isOnline={isCloudOnline}
+          onManualSync={onManualSync}
+        />
+
         {/* SLA Health Indicator */}
         <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded text-xs text-emerald-700 dark:text-emerald-300">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />

@@ -4,6 +4,7 @@ import { dbService } from '../services/dbService';
 import { sendSuccess, sendError } from '../utils/response';
 
 export const chamaController = {
+  // Members
   async getMembers(req: AuthenticatedRequest, res: Response) {
     try {
       const members = await dbService.find('chama_members', { organization_id: req.organizationId! });
@@ -30,6 +31,7 @@ export const chamaController = {
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
 
+  // Contributions
   async getContributions(req: AuthenticatedRequest, res: Response) {
     try {
       const contributions = await dbService.find('chama_contributions', { organization_id: req.organizationId! });
@@ -49,6 +51,7 @@ export const chamaController = {
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
 
+  // Loans
   async getLoans(req: AuthenticatedRequest, res: Response) {
     try {
       const loans = await dbService.find('chama_loans', { organization_id: req.organizationId! });
@@ -65,6 +68,26 @@ export const chamaController = {
         organization_id: req.organizationId!,
       });
       return sendSuccess(res, loan, 'Loan applied', 201);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+
+  // Group Profile
+  async getGroup(req: AuthenticatedRequest, res: Response) {
+    try {
+      let group = await dbService.findOne('chama_groups', { organization_id: req.organizationId! });
+      return sendSuccess(res, group);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+
+  async updateGroup(req: AuthenticatedRequest, res: Response) {
+    try {
+      let group = await dbService.findOne('chama_groups', { organization_id: req.organizationId! });
+      if (group) {
+        group = await dbService.update('chama_groups', group.id, req.body, req.organizationId!);
+      } else {
+        group = await dbService.create('chama_groups', { ...req.body, organization_id: req.organizationId! });
+      }
+      return sendSuccess(res, group, 'Chama profile saved');
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
 };

@@ -46,6 +46,7 @@ import { MessagesModule } from '../components/businessManager/MessagesModule';
 import { PaymentsModule } from '../components/businessManager/PaymentsModule';
 import { SettingsModule } from '../components/businessManager/SettingsModule';
 import { PrintDocumentModal } from '../components/businessManager/PrintDocumentModal';
+import { CloudSyncIndicator } from '../components/ui/CloudSyncIndicator';
 
 interface BusinessManagerPageProps {
   onBackToDirectory?: () => void;
@@ -165,6 +166,80 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
     localStorage.setItem('paperglow_bm_activities', JSON.stringify(activities));
   }, [activities]);
 
+  // Cloud Synchronization State
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudBusinessData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [custRes, prodRes, expRes, empRes, ordRes] = await Promise.allSettled([
+        api.business.getCustomers(),
+        api.business.getProducts(),
+        api.business.getExpenses(),
+        api.business.getEmployees(),
+        api.business.getOrders(),
+      ]);
+
+      if (custRes.status === 'fulfilled' && custRes.value?.data && custRes.value.data.length > 0) {
+        const cloudCusts = custRes.value.data.map((c: any) => ({
+          id: String(c.id || c.uuid),
+          name: c.name || '',
+          company: c.notes || c.company || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          address: c.address || '',
+          status: c.status || 'active',
+          balance: Number(c.balance || 0),
+          totalInvoiced: Number(c.total_invoiced || 0),
+          notes: [],
+        }));
+        setCustomers(cloudCusts);
+      }
+
+      if (prodRes.status === 'fulfilled' && prodRes.value?.data && prodRes.value.data.length > 0) {
+        const cloudProds = prodRes.value.data.map((p: any) => ({
+          id: String(p.id || p.uuid),
+          name: p.name || '',
+          sku: p.sku || `SKU-${p.id}`,
+          category: p.category || 'General',
+          stockQuantity: Number(p.stock_quantity ?? p.stockQuantity ?? 10),
+          unit: p.unit || 'pcs',
+          unitCost: Number(p.unit_cost ?? p.unitCost ?? 0),
+          sellingPrice: Number(p.selling_price ?? p.sellingPrice ?? 0),
+          reorderLevel: Number(p.reorder_level ?? p.reorderLevel ?? 5),
+          status: (p.stock_quantity || 0) <= (p.reorder_level || 5) ? 'low_stock' : 'in_stock',
+        }));
+        setInventory(cloudProds);
+      }
+
+      if (expRes.status === 'fulfilled' && expRes.value?.data && expRes.value.data.length > 0) {
+        const cloudExps = expRes.value.data.map((e: any) => ({
+          id: String(e.id || e.uuid),
+          date: e.date || new Date().toISOString().split('T')[0],
+          category: e.category || 'General',
+          description: e.title || e.description || '',
+          amount: Number(e.amount || 0),
+          payee: e.paid_to || e.payee || '',
+          paymentMethod: e.payment_method || 'M-Pesa',
+          status: 'recorded',
+        }));
+        setExpenses(cloudExps);
+      }
+
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Business Cloud] Using offline cache:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudBusinessData();
+  }, []);
+
   // Activity Logger Helper
   const logActivity = (actor: string, action: string, module: BMModule, detail: string) => {
     const newLog: ActivityLog = {
@@ -205,6 +280,15 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       return [doc, ...prev];
     });
 
+    api.business.createInvoice({
+      invoice_number: doc.documentNumber,
+      customer_name: doc.customerName,
+      total_amount: doc.grandTotal,
+      status: doc.status,
+      issue_date: doc.date,
+      due_date: doc.dueDate,
+    }).catch(() => {});
+
     logActivity(
       'Operations Lead',
       `Saved ${doc.documentType}`,
@@ -227,6 +311,17 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       }
       return [item, ...prev];
     });
+
+    api.business.createProduct({
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      unit: item.unit,
+      unit_cost: item.unitCost,
+      selling_price: item.sellingPrice,
+      stock_quantity: item.stockQuantity,
+      reorder_level: item.reorderLevel,
+    }).catch(() => {});
 
     logActivity('Stock Officer', 'Saved Item', 'inventory', `${item.name} (${item.sku}) updated.`);
   };
@@ -384,6 +479,13 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       return [order, ...prev];
     });
 
+    api.business.createOrder({
+      order_number: order.orderNumber,
+      customer_name: order.customerName,
+      total_amount: order.totalAmount,
+      status: order.status,
+    }).catch(() => {});
+
     logActivity(
       'Front Desk',
       'Saved Booking',
@@ -495,6 +597,15 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
 
         {/* Module Content Viewport */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <span className="text-xs text-neutral-500 font-mono">WORKSPACE: PAPERGLOW-BUSINESS-MANAGER</span>
+            <CloudSyncIndicator
+              appName="Business Manager"
+              isSyncing={isCloudSyncing}
+              isOnline={isCloudOnline}
+              onManualSync={fetchCloudBusinessData}
+            />
+          </div>
           {currentModule === 'dashboard' && (
             <DashboardModule
               documents={documents}

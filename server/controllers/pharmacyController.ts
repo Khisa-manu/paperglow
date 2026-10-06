@@ -38,4 +38,32 @@ export const pharmacyController = {
       return sendSuccess(res, sale, 'Sale completed', 201);
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
+
+  // Stock movements
+  async getMovements(req: AuthenticatedRequest, res: Response) {
+    try {
+      const movements = await dbService.find('pharm_stock_movements', { organization_id: req.organizationId! }, { orderBy: 'id', orderDirection: 'DESC' });
+      return sendSuccess(res, movements);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+  async createMovement(req: AuthenticatedRequest, res: Response) {
+    try {
+      const movement = await dbService.create('pharm_stock_movements', { ...req.body, organization_id: req.organizationId! });
+      return sendSuccess(res, movement, 'Pharmacy movement logged', 201);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+
+  // Suppliers
+  async getSuppliers(req: AuthenticatedRequest, res: Response) {
+    try {
+      const suppliers = await dbService.find('pharm_suppliers', { organization_id: req.organizationId! });
+      return sendSuccess(res, suppliers);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+  async createSupplier(req: AuthenticatedRequest, res: Response) {
+    try {
+      const supplier = await dbService.create('pharm_suppliers', { ...req.body, organization_id: req.organizationId! });
+      return sendSuccess(res, supplier, 'Supplier registered', 201);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
 };

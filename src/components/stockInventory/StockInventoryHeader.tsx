@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { InventoryModule } from '../../types/stockInventory';
+import { CloudSyncIndicator } from '../ui/CloudSyncIndicator';
 
 interface StockInventoryHeaderProps {
   currentModule: InventoryModule;
@@ -24,6 +25,9 @@ interface StockInventoryHeaderProps {
   toggleDarkMode: () => void;
   lowStockCount: number;
   outOfStockCount: number;
+  isCloudSyncing?: boolean;
+  isCloudOnline?: boolean;
+  onManualSync?: () => void;
 }
 
 export const StockInventoryHeader: React.FC<StockInventoryHeaderProps> = ({
@@ -37,6 +41,9 @@ export const StockInventoryHeader: React.FC<StockInventoryHeaderProps> = ({
   toggleDarkMode,
   lowStockCount,
   outOfStockCount,
+  isCloudSyncing,
+  isCloudOnline,
+  onManualSync,
 }) => {
   const getModuleTitle = (mod: InventoryModule) => {
     switch (mod) {
@@ -118,6 +125,13 @@ export const StockInventoryHeader: React.FC<StockInventoryHeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center space-x-2 sm:space-x-3">
+        <CloudSyncIndicator
+          appName="Stock Inventory"
+          isSyncing={isCloudSyncing}
+          isOnline={isCloudOnline}
+          onManualSync={onManualSync}
+        />
+
         {/* Barcode Quick Trigger */}
         <button
           onClick={onNavigateBarcode}

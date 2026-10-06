@@ -16,6 +16,8 @@ import { legalController } from '../controllers/legalController';
 import { schoolController } from '../controllers/schoolController';
 import { chamaController } from '../controllers/chamaController';
 import { clinicController } from '../controllers/clinicController';
+import { partyController } from '../controllers/partyController';
+import { invoiceDocController } from '../controllers/invoiceDocController';
 import { requireAuth } from '../middleware/auth';
 import { requireOrgContext } from '../middleware/orgContext';
 
@@ -145,9 +147,11 @@ apiRouter.post('/business/payments', requireAuth, requireOrgContext, businessCon
 // ============================================================================
 apiRouter.get('/property/properties', requireAuth, requireOrgContext, propertyController.getProperties);
 apiRouter.post('/property/properties', requireAuth, requireOrgContext, propertyController.createProperty);
+apiRouter.delete('/property/properties/:id', requireAuth, requireOrgContext, propertyController.deleteProperty);
 
 apiRouter.get('/property/tenants', requireAuth, requireOrgContext, propertyController.getTenants);
 apiRouter.post('/property/tenants', requireAuth, requireOrgContext, propertyController.createTenant);
+apiRouter.delete('/property/tenants/:id', requireAuth, requireOrgContext, propertyController.deleteTenant);
 
 apiRouter.get('/property/rent-payments', requireAuth, requireOrgContext, propertyController.getRentPayments);
 apiRouter.post('/property/rent-payments', requireAuth, requireOrgContext, propertyController.createRentPayment);
@@ -155,6 +159,9 @@ apiRouter.post('/property/rent-payments', requireAuth, requireOrgContext, proper
 apiRouter.get('/property/maintenance', requireAuth, requireOrgContext, propertyController.getMaintenance);
 apiRouter.post('/property/maintenance', requireAuth, requireOrgContext, propertyController.createMaintenance);
 apiRouter.put('/property/maintenance/:id', requireAuth, requireOrgContext, propertyController.updateMaintenance);
+
+apiRouter.get('/property/expenses', requireAuth, requireOrgContext, propertyController.getExpenses);
+apiRouter.post('/property/expenses', requireAuth, requireOrgContext, propertyController.createExpense);
 
 // ============================================================================
 // 9. PHARMACY MANAGER
@@ -165,6 +172,12 @@ apiRouter.put('/pharmacy/medicines/:id', requireAuth, requireOrgContext, pharmac
 
 apiRouter.get('/pharmacy/sales', requireAuth, requireOrgContext, pharmacyController.getSales);
 apiRouter.post('/pharmacy/sales', requireAuth, requireOrgContext, pharmacyController.createSale);
+
+apiRouter.get('/pharmacy/movements', requireAuth, requireOrgContext, pharmacyController.getMovements);
+apiRouter.post('/pharmacy/movements', requireAuth, requireOrgContext, pharmacyController.createMovement);
+
+apiRouter.get('/pharmacy/suppliers', requireAuth, requireOrgContext, pharmacyController.getSuppliers);
+apiRouter.post('/pharmacy/suppliers', requireAuth, requireOrgContext, pharmacyController.createSupplier);
 
 // ============================================================================
 // 10. TICKETING SYSTEM
@@ -183,6 +196,18 @@ apiRouter.post('/booking/bookings', requireAuth, requireOrgContext, bookingContr
 apiRouter.put('/booking/bookings/:id', requireAuth, requireOrgContext, bookingController.updateBooking);
 apiRouter.delete('/booking/bookings/:id', requireAuth, requireOrgContext, bookingController.deleteBooking);
 
+apiRouter.get('/booking/customers', requireAuth, requireOrgContext, bookingController.getCustomers);
+apiRouter.post('/booking/customers', requireAuth, requireOrgContext, bookingController.createCustomer);
+
+apiRouter.get('/booking/services', requireAuth, requireOrgContext, bookingController.getServices);
+apiRouter.post('/booking/services', requireAuth, requireOrgContext, bookingController.createService);
+
+apiRouter.get('/booking/staff', requireAuth, requireOrgContext, bookingController.getStaff);
+apiRouter.post('/booking/staff', requireAuth, requireOrgContext, bookingController.createStaff);
+
+apiRouter.get('/booking/payments', requireAuth, requireOrgContext, bookingController.getPayments);
+apiRouter.post('/booking/payments', requireAuth, requireOrgContext, bookingController.createPayment);
+
 // ============================================================================
 // 12. INVENTORY SYSTEM
 // ============================================================================
@@ -191,12 +216,27 @@ apiRouter.post('/inventory/products', requireAuth, requireOrgContext, inventoryC
 apiRouter.put('/inventory/products/:id', requireAuth, requireOrgContext, inventoryController.updateProduct);
 apiRouter.delete('/inventory/products/:id', requireAuth, requireOrgContext, inventoryController.deleteProduct);
 
+apiRouter.get('/inventory/movements', requireAuth, requireOrgContext, inventoryController.getMovements);
+apiRouter.post('/inventory/movements', requireAuth, requireOrgContext, inventoryController.createMovement);
+
+apiRouter.get('/inventory/suppliers', requireAuth, requireOrgContext, inventoryController.getSuppliers);
+apiRouter.post('/inventory/suppliers', requireAuth, requireOrgContext, inventoryController.createSupplier);
+
 // ============================================================================
 // 13. LEGAL PRACTICE MANAGER
 // ============================================================================
 apiRouter.get('/legal/matters', requireAuth, requireOrgContext, legalController.getMatters);
 apiRouter.post('/legal/matters', requireAuth, requireOrgContext, legalController.createMatter);
 apiRouter.put('/legal/matters/:id', requireAuth, requireOrgContext, legalController.updateMatter);
+
+apiRouter.get('/legal/clients', requireAuth, requireOrgContext, legalController.getClients);
+apiRouter.post('/legal/clients', requireAuth, requireOrgContext, legalController.createClient);
+
+apiRouter.get('/legal/hearings', requireAuth, requireOrgContext, legalController.getHearings);
+apiRouter.post('/legal/hearings', requireAuth, requireOrgContext, legalController.createHearing);
+
+apiRouter.get('/legal/time-entries', requireAuth, requireOrgContext, legalController.getTimeEntries);
+apiRouter.post('/legal/time-entries', requireAuth, requireOrgContext, legalController.createTimeEntry);
 
 // ============================================================================
 // 14. SCHOOL MANAGER
@@ -205,6 +245,15 @@ apiRouter.get('/school/students', requireAuth, requireOrgContext, schoolControll
 apiRouter.post('/school/students', requireAuth, requireOrgContext, schoolController.createStudent);
 apiRouter.put('/school/students/:id', requireAuth, requireOrgContext, schoolController.updateStudent);
 apiRouter.delete('/school/students/:id', requireAuth, requireOrgContext, schoolController.deleteStudent);
+
+apiRouter.get('/school/classes', requireAuth, requireOrgContext, schoolController.getClasses);
+apiRouter.post('/school/classes', requireAuth, requireOrgContext, schoolController.createClass);
+
+apiRouter.get('/school/teachers', requireAuth, requireOrgContext, schoolController.getTeachers);
+apiRouter.post('/school/teachers', requireAuth, requireOrgContext, schoolController.createTeacher);
+
+apiRouter.get('/school/fee-payments', requireAuth, requireOrgContext, schoolController.getFeePayments);
+apiRouter.post('/school/fee-payments', requireAuth, requireOrgContext, schoolController.createFeePayment);
 
 // ============================================================================
 // 15. CHAMA MANAGER
@@ -219,6 +268,9 @@ apiRouter.post('/chama/contributions', requireAuth, requireOrgContext, chamaCont
 apiRouter.get('/chama/loans', requireAuth, requireOrgContext, chamaController.getLoans);
 apiRouter.post('/chama/loans', requireAuth, requireOrgContext, chamaController.createLoan);
 
+apiRouter.get('/chama/group', requireAuth, requireOrgContext, chamaController.getGroup);
+apiRouter.put('/chama/group', requireAuth, requireOrgContext, chamaController.updateGroup);
+
 // ============================================================================
 // 16. CLINIC MANAGER
 // ============================================================================
@@ -231,3 +283,28 @@ apiRouter.post('/clinic/appointments', requireAuth, requireOrgContext, clinicCon
 
 apiRouter.get('/clinic/visits', requireAuth, requireOrgContext, clinicController.getVisits);
 apiRouter.post('/clinic/visits', requireAuth, requireOrgContext, clinicController.createVisit);
+
+// ============================================================================
+// 17. PARTY MANAGER
+// ============================================================================
+apiRouter.get('/party/members', requireAuth, requireOrgContext, partyController.getMembers);
+apiRouter.post('/party/members', requireAuth, requireOrgContext, partyController.createMember);
+apiRouter.put('/party/members/:id', requireAuth, requireOrgContext, partyController.updateMember);
+apiRouter.delete('/party/members/:id', requireAuth, requireOrgContext, partyController.deleteMember);
+
+apiRouter.get('/party/branches', requireAuth, requireOrgContext, partyController.getBranches);
+apiRouter.post('/party/branches', requireAuth, requireOrgContext, partyController.createBranch);
+
+apiRouter.get('/party/events', requireAuth, requireOrgContext, partyController.getEvents);
+apiRouter.post('/party/events', requireAuth, requireOrgContext, partyController.createEvent);
+
+apiRouter.get('/party/finance', requireAuth, requireOrgContext, partyController.getFinance);
+apiRouter.post('/party/finance', requireAuth, requireOrgContext, partyController.createFinance);
+
+// ============================================================================
+// 18. INVOICE GENERATOR (CLOUD DOCUMENTS)
+// ============================================================================
+apiRouter.get('/invoices/documents', requireAuth, requireOrgContext, invoiceDocController.getDocuments);
+apiRouter.post('/invoices/documents', requireAuth, requireOrgContext, invoiceDocController.createDocument);
+apiRouter.put('/invoices/documents/:id', requireAuth, requireOrgContext, invoiceDocController.updateDocument);
+apiRouter.delete('/invoices/documents/:id', requireAuth, requireOrgContext, invoiceDocController.deleteDocument);

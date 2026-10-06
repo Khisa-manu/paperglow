@@ -32,6 +32,7 @@ import {
 } from '../data/defaultLegalPracticeData';
 
 import { LegalPracticeHeader } from '../components/legalPractice/LegalPracticeHeader';
+import { api } from '../services/api';
 import { LegalPracticeSidebar } from '../components/legalPractice/LegalPracticeSidebar';
 import { DashboardModule } from '../components/legalPractice/DashboardModule';
 import { MattersModule } from '../components/legalPractice/MattersModule';
@@ -184,6 +185,87 @@ export const LegalPracticePage: React.FC<LegalPracticePageProps> = ({
       document.documentElement.classList.remove('dark');
     }
   };
+
+  // Cloud Synchronization State (DirectAdmin MariaDB)
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudLegalData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [matRes, cliRes, hrgRes, timeRes] = await Promise.allSettled([
+        api.legal.getMatters(),
+        api.legal.getClients(),
+        api.legal.getHearings(),
+        api.legal.getTimeEntries(),
+      ]);
+
+      if (matRes.status === 'fulfilled' && matRes.value?.data && matRes.value.data.length > 0) {
+        const cloudMatters: LegalMatter[] = matRes.value.data.map((m: any) => ({
+          id: String(m.id || m.uuid),
+          matterNumber: m.matter_number || `MAT-${m.id}`,
+          title: m.title || 'Legal Matter',
+          clientId: String(m.client_id || 'cli-1'),
+          clientName: m.client_name || 'Client',
+          practiceArea: m.practice_area || 'Commercial Law',
+          courtForum: m.court_forum || 'High Court of Kenya',
+          status: (m.status || 'active').toLowerCase() as any,
+          billingType: m.billing_type || 'hourly',
+          assignedAdvocateName: m.lead_advocate || 'Advocate In Charge',
+          filingDate: m.filing_date || new Date().toISOString().slice(0, 10),
+          nextCourtDate: m.next_court_date || undefined,
+          nextCourtPurpose: m.next_court_purpose || undefined,
+          caseJudge: m.case_judge || undefined,
+          opposingParty: m.opposing_party || undefined,
+          opposingCounsel: m.opposing_counsel || undefined,
+          totalBilledKes: Number(m.total_billed || 0),
+          totalPaidKes: Number(m.total_paid || 0),
+          outstandingBalanceKes: Number(m.balance || 0),
+          totalHoursRecorded: Number(m.hours_billed || 0),
+          timeline: [
+            {
+              id: `t-${m.id}`,
+              date: m.created_at ? m.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+              title: 'Matter Record Active in Cloud',
+              description: 'Loaded from MariaDB multi-tenant database.',
+              performedBy: 'System Cloud Sync',
+              category: 'filing',
+            },
+          ],
+          updatedAt: m.updated_at || new Date().toISOString(),
+        }));
+        setMatters(cloudMatters);
+      }
+
+      if (cliRes.status === 'fulfilled' && cliRes.value?.data && cliRes.value.data.length > 0) {
+        const cloudClients: LegalClient[] = cliRes.value.data.map((c: any) => ({
+          id: String(c.id || c.uuid),
+          name: c.name || 'Client',
+          company: c.company || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          address: c.address || 'Nairobi, Kenya',
+          clientType: c.client_type || 'corporate',
+          mattersCount: Number(c.matters_count || 1),
+          totalBilledKes: Number(c.total_billed || 0),
+          status: 'active',
+          idNumber: c.national_id || '',
+        }));
+        setClients(cloudClients);
+      }
+
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Legal Cloud] Using local storage fallback:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudLegalData();
+  }, []);
 
   // Metrics
   const activeMattersCount = matters.filter((m) => m.status !== 'closed').length;

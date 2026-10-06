@@ -26,6 +26,7 @@ import {
 } from '../data/defaultTicketingData';
 
 import { TicketingHeader } from '../components/ticketing/TicketingHeader';
+import { api } from '../services/api';
 import { TicketingSidebar } from '../components/ticketing/TicketingSidebar';
 import { DashboardModule } from '../components/ticketing/DashboardModule';
 import { TicketsModule } from '../components/ticketing/TicketsModule';
@@ -140,6 +141,53 @@ export const TicketingPage: React.FC<TicketingPageProps> = ({ onBackToPaperglow 
     }
   };
 
+  // Cloud Synchronization State (DirectAdmin MariaDB)
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudOnline, setIsCloudOnline] = useState(true);
+
+  const fetchCloudTicketingData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const res = await api.ticketing.getTickets();
+      if (res.data && res.data.length > 0) {
+        const cloudTickets: Ticket[] = res.data.map((t: any) => ({
+          id: t.ticket_code || `TCK-${t.id}`,
+          subject: t.subject || 'Support Request',
+          description: t.description || '',
+          customerId: String(t.customer_id || 'cust-1'),
+          customerName: t.customer_name || 'Valued Customer',
+          customerEmail: t.customer_email || 'client@paperglow.co.ke',
+          customerPhone: t.customer_phone || '+254 700 000000',
+          companyName: t.company_name || 'Paperglow Client',
+          categoryId: String(t.category_id || 'cat-general'),
+          categoryName: t.category_name || 'General Inquiry',
+          priority: (t.priority || 'medium').toLowerCase() as any,
+          status: (t.status || 'open').toLowerCase().replace(' ', '_') as any,
+          channel: (t.channel || 'portal').toLowerCase() as any,
+          assignedStaffId: String(t.assigned_to_user_id || 'staff-wanjiku'),
+          assignedStaffName: t.assigned_staff_name || 'Wanjiku Mwangi',
+          tags: t.tags ? (typeof t.tags === 'string' ? t.tags.split(',') : t.tags) : ['cloud'],
+          createdAt: t.created_at || new Date().toISOString(),
+          updatedAt: t.updated_at || new Date().toISOString(),
+          dueDate: t.due_date || new Date(Date.now() + 86400000).toISOString(),
+          slaBreached: Boolean(t.sla_breached),
+          satisfactionScore: t.satisfaction_score ? Number(t.satisfaction_score) : undefined,
+        }));
+        setTickets(cloudTickets);
+      }
+      setIsCloudOnline(true);
+    } catch (err) {
+      console.warn('[Ticketing Cloud] Using local storage fallback:', err);
+      setIsCloudOnline(false);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCloudTicketingData();
+  }, []);
+
   const currentStaff = staffMembers.find((s) => s.id === currentStaffId) || staffMembers[0];
 
   // Helper count badges
@@ -158,6 +206,16 @@ export const TicketingPage: React.FC<TicketingPageProps> = ({ onBackToPaperglow 
 
   const handleCreateTicket = (newTicket: Ticket) => {
     setTickets((prev) => [newTicket, ...prev]);
+
+    api.ticketing.createTicket({
+      subject: newTicket.subject,
+      description: newTicket.description,
+      customer_name: newTicket.customerName,
+      customer_email: newTicket.customerEmail,
+      priority: newTicket.priority,
+      status: newTicket.status,
+      category_name: newTicket.categoryName,
+    }).catch((e) => console.warn('Cloud create ticket failed:', e));
 
     // Create activity
     const newAct: TicketActivity = {
@@ -200,6 +258,8 @@ export const TicketingPage: React.FC<TicketingPageProps> = ({ onBackToPaperglow 
     };
     setMessages((prev) => [...prev, newMessage]);
 
+    api.ticketing.addMessage(ticketId, messageText).catch((e) => console.warn('Cloud message send failed:', e));
+
     // Update ticket activity and updated timestamp
     const targetTicket = tickets.find((t) => t.id === ticketId);
     if (targetTicket) {
@@ -241,6 +301,8 @@ export const TicketingPage: React.FC<TicketingPageProps> = ({ onBackToPaperglow 
           : t
       )
     );
+
+    api.ticketing.updateTicket(ticketId, { status: newStatus }).catch((e) => console.warn('Cloud update ticket status failed:', e));
 
     const newAct: TicketActivity = {
       id: `act_${Date.now()}`,
@@ -508,6 +570,9 @@ export const TicketingPage: React.FC<TicketingPageProps> = ({ onBackToPaperglow 
         onBackToPortal={onBackToPaperglow}
         isDark={isDark}
         toggleDarkMode={toggleDarkMode}
+        isCloudSyncing={isCloudSyncing}
+        isCloudOnline={isCloudOnline}
+        onManualSync={fetchCloudTicketingData}
       />
 
       <div className="flex-1 flex overflow-hidden">

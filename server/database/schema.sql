@@ -1034,4 +1034,101 @@ CREATE TABLE IF NOT EXISTS `clinic_visits` (
   FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `party_members` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` CHAR(36) NOT NULL UNIQUE,
+  `organization_id` BIGINT UNSIGNED NOT NULL,
+  `member_number` VARCHAR(50) NOT NULL,
+  `full_name` VARCHAR(191) NOT NULL,
+  `id_number` VARCHAR(50) NULL,
+  `phone` VARCHAR(50) NOT NULL,
+  `email` VARCHAR(191) NULL,
+  `county` VARCHAR(100) NOT NULL,
+  `constituency` VARCHAR(100) NULL,
+  `ward` VARCHAR(100) NULL,
+  `branch_id` VARCHAR(50) NULL,
+  `role` VARCHAR(100) NOT NULL DEFAULT 'Member',
+  `status` ENUM('active', 'inactive', 'suspended', 'pending') NOT NULL DEFAULT 'active',
+  `dues_status` ENUM('paid', 'due', 'overdue', 'exempt') NOT NULL DEFAULT 'paid',
+  `joined_date` DATE NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `party_branches` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` CHAR(36) NOT NULL UNIQUE,
+  `organization_id` BIGINT UNSIGNED NOT NULL,
+  `name` VARCHAR(191) NOT NULL,
+  `code` VARCHAR(50) NOT NULL,
+  `county` VARCHAR(100) NOT NULL,
+  `constituency` VARCHAR(100) NULL,
+  `leadership` VARCHAR(255) NULL,
+  `member_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `party_events` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` CHAR(36) NOT NULL UNIQUE,
+  `organization_id` BIGINT UNSIGNED NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(100) NOT NULL,
+  `date` DATE NOT NULL,
+  `venue` VARCHAR(255) NOT NULL,
+  `county` VARCHAR(100) NOT NULL,
+  `status` ENUM('upcoming', 'completed', 'cancelled') NOT NULL DEFAULT 'upcoming',
+  `attendees_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `budget` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `party_finance` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` CHAR(36) NOT NULL UNIQUE,
+  `organization_id` BIGINT UNSIGNED NOT NULL,
+  `reference` VARCHAR(100) NOT NULL,
+  `type` ENUM('income', 'expense') NOT NULL,
+  `category` VARCHAR(100) NOT NULL,
+  `amount` DECIMAL(12, 2) NOT NULL,
+  `date` DATE NOT NULL,
+  `source` VARCHAR(191) NOT NULL,
+  `payment_method` VARCHAR(50) NOT NULL,
+  `status` ENUM('completed', 'pending', 'cancelled') NOT NULL DEFAULT 'completed',
+  `description` TEXT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `invoice_documents` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` CHAR(36) NOT NULL UNIQUE,
+  `organization_id` BIGINT UNSIGNED NOT NULL,
+  `doc_type` ENUM('invoice', 'quotation') NOT NULL,
+  `doc_number` VARCHAR(100) NOT NULL,
+  `issue_date` DATE NOT NULL,
+  `due_date` DATE NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'Draft',
+  `client_name` VARCHAR(191) NOT NULL,
+  `client_email` VARCHAR(191) NULL,
+  `client_phone` VARCHAR(50) NULL,
+  `currency` CHAR(3) NOT NULL DEFAULT 'KES',
+  `subtotal` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `tax_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `total_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `data_json` LONGTEXT NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -13,6 +13,7 @@ import {
   Receipt,
 } from 'lucide-react';
 import { PharmModule } from '../../types/pharmacyManager';
+import { CloudSyncIndicator } from '../ui/CloudSyncIndicator';
 
 interface PharmHeaderProps {
   currentModule: PharmModule;
@@ -27,6 +28,9 @@ interface PharmHeaderProps {
   onQuickAddPO: () => void;
   isDark: boolean;
   onToggleDarkMode: () => void;
+  isCloudSyncing?: boolean;
+  isCloudOnline?: boolean;
+  onManualSync?: () => void;
 }
 
 export const PharmHeader: React.FC<PharmHeaderProps> = ({
@@ -42,6 +46,9 @@ export const PharmHeader: React.FC<PharmHeaderProps> = ({
   onQuickAddPO,
   isDark,
   onToggleDarkMode,
+  isCloudSyncing,
+  isCloudOnline,
+  onManualSync,
 }) => {
   const [isQuickOpen, setIsQuickOpen] = useState(false);
 
@@ -115,6 +122,13 @@ export const PharmHeader: React.FC<PharmHeaderProps> = ({
 
       {/* Right: Quick Action, Alerts Counter, Dark Mode */}
       <div className="flex items-center space-x-2.5">
+        <CloudSyncIndicator
+          appName="Pharmacy Manager"
+          isSyncing={isCloudSyncing}
+          isOnline={isCloudOnline}
+          onManualSync={onManualSync}
+        />
+
         {/* Quick Action Dropdown */}
         <div className="relative">
           <button

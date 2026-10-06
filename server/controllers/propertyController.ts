@@ -17,6 +17,12 @@ export const propertyController = {
       return sendSuccess(res, property, 'Property created', 201);
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
+  async deleteProperty(req: AuthenticatedRequest, res: Response) {
+    try {
+      await dbService.delete('pm_properties', req.params.id, req.organizationId!);
+      return sendSuccess(res, true, 'Property deleted');
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
 
   // Tenants
   async getTenants(req: AuthenticatedRequest, res: Response) {
@@ -29,6 +35,12 @@ export const propertyController = {
     try {
       const tenant = await dbService.create('pm_tenants', { ...req.body, organization_id: req.organizationId! });
       return sendSuccess(res, tenant, 'Tenant registered', 201);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+  async deleteTenant(req: AuthenticatedRequest, res: Response) {
+    try {
+      await dbService.delete('pm_tenants', req.params.id, req.organizationId!);
+      return sendSuccess(res, true, 'Tenant deleted');
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
 
@@ -64,6 +76,20 @@ export const propertyController = {
     try {
       const updated = await dbService.update('pm_maintenance', req.params.id, req.body, req.organizationId!);
       return sendSuccess(res, updated, 'Maintenance request updated');
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+
+  // Expenses
+  async getExpenses(req: AuthenticatedRequest, res: Response) {
+    try {
+      const expenses = await dbService.find('pm_property_expenses', { organization_id: req.organizationId! });
+      return sendSuccess(res, expenses);
+    } catch (e: any) { return sendError(res, e.message, 500); }
+  },
+  async createExpense(req: AuthenticatedRequest, res: Response) {
+    try {
+      const expense = await dbService.create('pm_property_expenses', { ...req.body, organization_id: req.organizationId! });
+      return sendSuccess(res, expense, 'Expense recorded', 201);
     } catch (e: any) { return sendError(res, e.message, 500); }
   },
 };

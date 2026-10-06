@@ -13,6 +13,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { LegalModule } from '../../types/legalPractice';
+import { CloudSyncIndicator } from '../ui/CloudSyncIndicator';
 
 interface LegalPracticeHeaderProps {
   currentModule: LegalModule;
@@ -24,6 +25,9 @@ interface LegalPracticeHeaderProps {
   urgentDeadlinesCount: number;
   overdueInvoicesCount: number;
   firmName: string;
+  isCloudSyncing?: boolean;
+  isCloudOnline?: boolean;
+  onManualSync?: () => void;
 }
 
 export const LegalPracticeHeader: React.FC<LegalPracticeHeaderProps> = ({
@@ -36,6 +40,9 @@ export const LegalPracticeHeader: React.FC<LegalPracticeHeaderProps> = ({
   urgentDeadlinesCount,
   overdueInvoicesCount,
   firmName,
+  isCloudSyncing,
+  isCloudOnline,
+  onManualSync,
 }) => {
   const getModuleTitle = (mod: LegalModule) => {
     switch (mod) {
@@ -104,6 +111,13 @@ export const LegalPracticeHeader: React.FC<LegalPracticeHeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        <CloudSyncIndicator
+          appName="Legal Practice"
+          isSyncing={isCloudSyncing}
+          isOnline={isCloudOnline}
+          onManualSync={onManualSync}
+        />
+
         {/* Indicators */}
         {upcomingCourtCount > 0 && (
           <span className="hidden lg:inline-flex items-center space-x-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900">

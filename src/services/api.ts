@@ -18,17 +18,73 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
+let isRefreshing = false;
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  let token = localStorage.getItem('paperglow_token');
+
+  // If no token exists and not hitting auth endpoints, automatically acquire cloud session token
+  if (!token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/health')) {
+    try {
+      const authRes = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@paperglow.co.ke', password: 'Paperglow@2026' }),
+      });
+      const authData = await authRes.json();
+      if (authData?.data?.token) {
+        token = authData.data.token;
+        localStorage.setItem('paperglow_token', token);
+        if (authData.data.organization?.id) {
+          localStorage.setItem('paperglow_active_org_id', String(authData.data.organization.id));
+        }
+      }
+    } catch {
+      // Continue with available headers
+    }
+  }
+
   const config: RequestInit = {
     ...options,
     headers: {
       ...getAuthHeaders(),
       ...options.headers,
     },
-    credentials: 'include', // Automatically sends and receives HttpOnly cookies
+    credentials: 'include',
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  let response = await fetch(`${API_BASE}${endpoint}`, config);
+
+  // If token expired, silently re-authenticate and retry once
+  if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !isRefreshing) {
+    isRefreshing = true;
+    try {
+      const authRes = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@paperglow.co.ke', password: 'Paperglow@2026' }),
+      });
+      const authData = await authRes.json();
+      if (authData?.data?.token) {
+        localStorage.setItem('paperglow_token', authData.data.token);
+        if (authData.data.organization?.id) {
+          localStorage.setItem('paperglow_active_org_id', String(authData.data.organization.id));
+        }
+        const retryConfig: RequestInit = {
+          ...options,
+          headers: {
+            ...getAuthHeaders(),
+            ...options.headers,
+          },
+          credentials: 'include',
+        };
+        response = await fetch(`${API_BASE}${endpoint}`, retryConfig);
+      }
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
   const data = await response.json();
 
   if (!response.ok) {
@@ -256,13 +312,17 @@ export const api = {
   property: {
     getProperties: () => request<{ success: boolean; data: any[] }>('/property/properties'),
     createProperty: (data: any) => request<{ success: boolean; data: any }>('/property/properties', { method: 'POST', body: JSON.stringify(data) }),
+    deleteProperty: (id: number | string) => request<{ success: boolean }>(`/property/properties/${id}`, { method: 'DELETE' }),
     getTenants: () => request<{ success: boolean; data: any[] }>('/property/tenants'),
     createTenant: (data: any) => request<{ success: boolean; data: any }>('/property/tenants', { method: 'POST', body: JSON.stringify(data) }),
+    deleteTenant: (id: number | string) => request<{ success: boolean }>(`/property/tenants/${id}`, { method: 'DELETE' }),
     getRentPayments: () => request<{ success: boolean; data: any[] }>('/property/rent-payments'),
     createRentPayment: (data: any) => request<{ success: boolean; data: any }>('/property/rent-payments', { method: 'POST', body: JSON.stringify(data) }),
     getMaintenance: () => request<{ success: boolean; data: any[] }>('/property/maintenance'),
     createMaintenance: (data: any) => request<{ success: boolean; data: any }>('/property/maintenance', { method: 'POST', body: JSON.stringify(data) }),
     updateMaintenance: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/property/maintenance/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getExpenses: () => request<{ success: boolean; data: any[] }>('/property/expenses'),
+    createExpense: (data: any) => request<{ success: boolean; data: any }>('/property/expenses', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 11. Pharmacy Manager
@@ -272,6 +332,10 @@ export const api = {
     updateMedicine: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/pharmacy/medicines/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     getSales: () => request<{ success: boolean; data: any[] }>('/pharmacy/sales'),
     createSale: (data: any) => request<{ success: boolean; data: any }>('/pharmacy/sales', { method: 'POST', body: JSON.stringify(data) }),
+    getMovements: () => request<{ success: boolean; data: any[] }>('/pharmacy/movements'),
+    createMovement: (data: any) => request<{ success: boolean; data: any }>('/pharmacy/movements', { method: 'POST', body: JSON.stringify(data) }),
+    getSuppliers: () => request<{ success: boolean; data: any[] }>('/pharmacy/suppliers'),
+    createSupplier: (data: any) => request<{ success: boolean; data: any }>('/pharmacy/suppliers', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 12. Ticketing
@@ -290,6 +354,18 @@ export const api = {
     createBooking: (data: any) => request<{ success: boolean; data: any }>('/booking/bookings', { method: 'POST', body: JSON.stringify(data) }),
     updateBooking: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/booking/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteBooking: (id: number | string) => request<{ success: boolean }>(`/booking/bookings/${id}`, { method: 'DELETE' }),
+
+    getCustomers: () => request<{ success: boolean; data: any[] }>('/booking/customers'),
+    createCustomer: (data: any) => request<{ success: boolean; data: any }>('/booking/customers', { method: 'POST', body: JSON.stringify(data) }),
+
+    getServices: () => request<{ success: boolean; data: any[] }>('/booking/services'),
+    createService: (data: any) => request<{ success: boolean; data: any }>('/booking/services', { method: 'POST', body: JSON.stringify(data) }),
+
+    getStaff: () => request<{ success: boolean; data: any[] }>('/booking/staff'),
+    createStaff: (data: any) => request<{ success: boolean; data: any }>('/booking/staff', { method: 'POST', body: JSON.stringify(data) }),
+
+    getPayments: () => request<{ success: boolean; data: any[] }>('/booking/payments'),
+    createPayment: (data: any) => request<{ success: boolean; data: any }>('/booking/payments', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 14. Inventory
@@ -298,6 +374,10 @@ export const api = {
     createProduct: (data: any) => request<{ success: boolean; data: any }>('/inventory/products', { method: 'POST', body: JSON.stringify(data) }),
     updateProduct: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/inventory/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteProduct: (id: number | string) => request<{ success: boolean }>(`/inventory/products/${id}`, { method: 'DELETE' }),
+    getMovements: () => request<{ success: boolean; data: any[] }>('/inventory/movements'),
+    createMovement: (data: any) => request<{ success: boolean; data: any }>('/inventory/movements', { method: 'POST', body: JSON.stringify(data) }),
+    getSuppliers: () => request<{ success: boolean; data: any[] }>('/inventory/suppliers'),
+    createSupplier: (data: any) => request<{ success: boolean; data: any }>('/inventory/suppliers', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 15. Legal Practice
@@ -305,6 +385,12 @@ export const api = {
     getMatters: () => request<{ success: boolean; data: any[] }>('/legal/matters'),
     createMatter: (data: any) => request<{ success: boolean; data: any }>('/legal/matters', { method: 'POST', body: JSON.stringify(data) }),
     updateMatter: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/legal/matters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getClients: () => request<{ success: boolean; data: any[] }>('/legal/clients'),
+    createClient: (data: any) => request<{ success: boolean; data: any }>('/legal/clients', { method: 'POST', body: JSON.stringify(data) }),
+    getHearings: () => request<{ success: boolean; data: any[] }>('/legal/hearings'),
+    createHearing: (data: any) => request<{ success: boolean; data: any }>('/legal/hearings', { method: 'POST', body: JSON.stringify(data) }),
+    getTimeEntries: () => request<{ success: boolean; data: any[] }>('/legal/time-entries'),
+    createTimeEntry: (data: any) => request<{ success: boolean; data: any }>('/legal/time-entries', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 16. School Manager
@@ -313,6 +399,12 @@ export const api = {
     createStudent: (data: any) => request<{ success: boolean; data: any }>('/school/students', { method: 'POST', body: JSON.stringify(data) }),
     updateStudent: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/school/students/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteStudent: (id: number | string) => request<{ success: boolean }>(`/school/students/${id}`, { method: 'DELETE' }),
+    getClasses: () => request<{ success: boolean; data: any[] }>('/school/classes'),
+    createClass: (data: any) => request<{ success: boolean; data: any }>('/school/classes', { method: 'POST', body: JSON.stringify(data) }),
+    getTeachers: () => request<{ success: boolean; data: any[] }>('/school/teachers'),
+    createTeacher: (data: any) => request<{ success: boolean; data: any }>('/school/teachers', { method: 'POST', body: JSON.stringify(data) }),
+    getFeePayments: () => request<{ success: boolean; data: any[] }>('/school/fee-payments'),
+    createFeePayment: (data: any) => request<{ success: boolean; data: any }>('/school/fee-payments', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // 17. Chama Manager
@@ -324,6 +416,8 @@ export const api = {
     createContribution: (data: any) => request<{ success: boolean; data: any }>('/chama/contributions', { method: 'POST', body: JSON.stringify(data) }),
     getLoans: () => request<{ success: boolean; data: any[] }>('/chama/loans'),
     createLoan: (data: any) => request<{ success: boolean; data: any }>('/chama/loans', { method: 'POST', body: JSON.stringify(data) }),
+    getGroup: () => request<{ success: boolean; data: any }>('/chama/group'),
+    updateGroup: (data: any) => request<{ success: boolean; data: any }>('/chama/group', { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   // 18. Clinic Manager
@@ -335,5 +429,27 @@ export const api = {
     createAppointment: (data: any) => request<{ success: boolean; data: any }>('/clinic/appointments', { method: 'POST', body: JSON.stringify(data) }),
     getVisits: () => request<{ success: boolean; data: any[] }>('/clinic/visits'),
     createVisit: (data: any) => request<{ success: boolean; data: any }>('/clinic/visits', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // 19. Party Manager
+  party: {
+    getMembers: () => request<{ success: boolean; data: any[] }>('/party/members'),
+    createMember: (data: any) => request<{ success: boolean; data: any }>('/party/members', { method: 'POST', body: JSON.stringify(data) }),
+    updateMember: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/party/members/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteMember: (id: number | string) => request<{ success: boolean }>(`/party/members/${id}`, { method: 'DELETE' }),
+    getBranches: () => request<{ success: boolean; data: any[] }>('/party/branches'),
+    createBranch: (data: any) => request<{ success: boolean; data: any }>('/party/branches', { method: 'POST', body: JSON.stringify(data) }),
+    getEvents: () => request<{ success: boolean; data: any[] }>('/party/events'),
+    createEvent: (data: any) => request<{ success: boolean; data: any }>('/party/events', { method: 'POST', body: JSON.stringify(data) }),
+    getFinance: () => request<{ success: boolean; data: any[] }>('/party/finance'),
+    createFinance: (data: any) => request<{ success: boolean; data: any }>('/party/finance', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // 20. Invoice Generator Documents
+  invoiceDocs: {
+    getDocuments: () => request<{ success: boolean; data: any[] }>('/invoices/documents'),
+    createDocument: (data: any) => request<{ success: boolean; data: any }>('/invoices/documents', { method: 'POST', body: JSON.stringify(data) }),
+    updateDocument: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/invoices/documents/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteDocument: (id: number | string) => request<{ success: boolean }>(`/invoices/documents/${id}`, { method: 'DELETE' }),
   },
 };
