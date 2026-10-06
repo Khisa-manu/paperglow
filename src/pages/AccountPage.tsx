@@ -92,6 +92,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [regCompany, setRegCompany] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Profile edit states
   const [editName, setEditName] = useState(profile.name);
@@ -174,19 +176,53 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     }
   }, [initialSsoApp]);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginEmail) {
-      onLogin(loginEmail);
-      showToast(`Welcome back, ${loginEmail}!`);
+    setAuthError(null);
+    if (!loginEmail || !loginPassword) {
+      setAuthError('Email and password are required.');
+      return;
+    }
+    try {
+      setIsAuthLoading(true);
+      const res = await api.auth.login(loginEmail, loginPassword);
+      if (res.data?.token) {
+        localStorage.setItem('paperglow_token', res.data.token);
+        if (res.data.organization?.id) {
+          localStorage.setItem('paperglow_active_org_id', String(res.data.organization.id));
+        }
+      }
+      onLogin(res.data.user.email, res.data.user.name, res.data.organization?.name);
+      showToast(`Welcome back, ${res.data.user.name || loginEmail}!`);
+    } catch (err: any) {
+      setAuthError(err.message || 'Login failed. Please verify credentials.');
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (regEmail && regName && regCompany) {
-      onLogin(regEmail, regName, regCompany);
+    setAuthError(null);
+    if (!regEmail || !regName || !regCompany || !regPassword) {
+      setAuthError('All fields including an 8+ character password are required.');
+      return;
+    }
+    try {
+      setIsAuthLoading(true);
+      const res = await api.auth.register(regName, regEmail, regPassword, regCompany);
+      if (res.data?.token) {
+        localStorage.setItem('paperglow_token', res.data.token);
+        if (res.data.organization?.id) {
+          localStorage.setItem('paperglow_active_org_id', String(res.data.organization.id));
+        }
+      }
+      onLogin(res.data.user.email, res.data.user.name, res.data.organization?.name);
       showToast(`Account registered for ${regCompany}!`);
+    } catch (err: any) {
+      setAuthError(err.message || 'Registration failed.');
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
@@ -363,6 +399,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
         {/* Card Form */}
         <div className="p-6 sm:p-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#14171d] shadow-xs space-y-6">
+          {authError && (
+            <div className="p-3.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 flex items-start space-x-2.5 text-xs text-red-700 dark:text-red-300">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+          )}
+
           {authMode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
@@ -375,7 +418,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="you@company.com"
+                    placeholder="admin@paperglow.co.ke"
                     required
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-red-600"
                   />
@@ -392,7 +435,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••••••"
+                    placeholder="Enter your password"
                     required
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-red-600"
                   />
@@ -409,21 +452,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+                disabled={isAuthLoading}
+                className="w-full py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer disabled:opacity-60"
               >
-                Sign In to Central Account
+                {isAuthLoading ? 'Authenticating...' : 'Sign In to Central Account'}
               </button>
 
-              {/* 1-Click Demo Shortcut */}
               <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 text-center">
-                <button
-                  type="button"
-                  onClick={() => onLogin('marcus@apexstudio.io', 'Marcus Vance', 'Apex Commercial Studio')}
-                  className="text-xs text-neutral-500 hover:text-red-600 transition-colors font-medium flex items-center justify-center space-x-1 mx-auto"
-                >
-                  <KeyRound className="w-3.5 h-3.5 text-red-600" />
-                  <span>1-Click Demo Sign In (Marcus Vance - Apex Studio)</span>
-                </button>
+                <p className="text-[11px] text-neutral-500">
+                  Protected by Paperglow bcrypt &amp; JWT multi-tenant authentication engine.
+                </p>
               </div>
             </form>
           ) : (

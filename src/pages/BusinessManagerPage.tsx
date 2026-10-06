@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import {
   BMModule,
   BusinessSettings,
@@ -267,11 +268,21 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       return [cust, ...prev];
     });
 
+    api.business.createCustomer({
+      name: cust.name,
+      email: cust.email,
+      phone: cust.phone,
+      address: cust.address,
+      status: 'active',
+      notes: cust.company || '',
+    }).catch((err) => console.warn('Could not sync customer to backend:', err));
+
     logActivity('Commercial Desk', 'Customer Saved', 'customers', `${cust.name} (${cust.company}) profile updated.`);
   };
 
   const handleDeleteCustomer = (id: string) => {
     setCustomers((prev) => prev.filter((c) => c.id !== id));
+    api.business.deleteCustomer(id).catch(() => {});
   };
 
   const handleAddCustomerNote = (customerId: string, noteText: string) => {
@@ -300,6 +311,16 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
   // CRUD Handlers for Expenses
   const handleSaveExpense = (exp: ExpenseRecord) => {
     setExpenses((prev) => [exp, ...prev]);
+
+    api.business.createExpense({
+      title: exp.description,
+      category: exp.category,
+      amount: exp.amount,
+      date: exp.date,
+      paid_to: exp.payee || 'Vendor',
+      payment_method: exp.paymentMethod,
+    }).catch((err) => console.warn('Could not sync expense to backend:', err));
+
     logActivity(
       'Finance Lead',
       'Recorded Expense',
@@ -321,6 +342,16 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       }
       return [emp, ...prev];
     });
+
+    api.business.createEmployee({
+      name: emp.fullName,
+      role: emp.role,
+      department: emp.department,
+      phone: emp.phone,
+      email: emp.email,
+      salary: emp.baseSalary,
+      status: 'active',
+    }).catch((err) => console.warn('Could not sync employee to backend:', err));
   };
 
   const handleDeleteEmployee = (id: string) => {

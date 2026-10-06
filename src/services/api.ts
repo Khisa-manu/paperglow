@@ -1,12 +1,28 @@
-// API Service Client for Paperglow Backend (Phases 1, 2, and 3)
+// API Service Client for Paperglow Multi-Tenant SaaS Backend
 const API_BASE = '/api/v1';
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('paperglow_token');
+  const orgId = localStorage.getItem('paperglow_active_org_id');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (orgId) {
+    headers['x-organization-id'] = orgId;
+  }
+  return headers;
+}
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const config: RequestInit = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     credentials: 'include', // Automatically sends and receives HttpOnly cookies
@@ -16,22 +32,28 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+    throw new Error(data.message || data.error || 'API request failed');
   }
 
   return data;
 }
 
 export const api = {
+  // 1. Health
+  health: {
+    check: () => fetch('/api/health').then((r) => r.json()),
+  },
+
+  // 2. Authentication
   auth: {
     login: (email: string, password: string) =>
-      request<{ success: boolean; data: any }>('/auth/login', {
+      request<{ success: boolean; data: { token: string; user: any; organization: any } }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
 
     register: (name: string, email: string, password: string, companyName: string, phone?: string) =>
-      request<{ success: boolean; data: any }>('/auth/register', {
+      request<{ success: boolean; data: { token: string; user: any; organization: any } }>('/auth/register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password, companyName, phone }),
       }),
@@ -42,7 +64,13 @@ export const api = {
       }),
 
     me: () =>
-      request<{ success: boolean; data: any }>('/auth/me'),
+      request<{ success: boolean; data: { user: any; organization: any; organizations: any[]; role: string; subscriptions: any[] } }>('/auth/me'),
+
+    switchOrg: (organizationId: number) =>
+      request<{ success: boolean; data: { token: string; organization: any; role: string } }>('/auth/switch-org', {
+        method: 'POST',
+        body: JSON.stringify({ organizationId }),
+      }),
 
     updateProfile: (profileData: { name?: string; phone?: string; twoFactorEnabled?: boolean }) =>
       request<{ success: boolean; data: any }>('/auth/profile', {
@@ -51,35 +79,93 @@ export const api = {
       }),
   },
 
-  subscriptions: {
-    list: () =>
-      request<{ success: boolean; data: any[] }>('/subscriptions'),
+  // 3. Organization Management
+  organizations: {
+    getCurrent: () => request<{ success: boolean; data: any }>('/organizations/current'),
+    updateCurrent: (data: any) =>
+      request<{ success: boolean; data: any }>('/organizations/current', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    listMembers: () => request<{ success: boolean; data: any[] }>('/organizations/members'),
+    inviteMember: (email: string, roleName: string = 'member') =>
+      request<{ success: boolean; data: any }>('/organizations/members/invite', {
+        method: 'POST',
+        body: JSON.stringify({ email, roleName }),
+      }),
+  },
 
+  // 4. Notifications
+  notifications: {
+    list: () => request<{ success: boolean; data: { notifications: any[]; unreadCount: number } }>('/notifications'),
+    markRead: (id: number | string) =>
+      request<{ success: boolean; data: any }>(`/notifications/${id}/read`, {
+        method: 'PATCH',
+      }),
+    markAllRead: () =>
+      request<{ success: boolean }>('/notifications/mark-all-read', {
+        method: 'POST',
+      }),
+    create: (notification: { title: string; message: string; category?: string; type?: string; link?: string }) =>
+      request<{ success: boolean; data: any }>('/notifications', {
+        method: 'POST',
+        body: JSON.stringify(notification),
+      }),
+  },
+
+  // 5. Documents & Files
+  documents: {
+    list: (category?: string) =>
+      request<{ success: boolean; data: any[] }>(`/documents${category ? `?category=${category}` : ''}`),
+    upload: async (file: File, category: string = 'other', title?: string) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', category);
+      if (title) formData.append('title', title);
+
+      const token = localStorage.getItem('paperglow_token');
+      const orgId = localStorage.getItem('paperglow_active_org_id');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (orgId) headers['x-organization-id'] = orgId;
+
+      const res = await fetch(`${API_BASE}/documents/upload`, {
+        method: 'POST',
+        body: formData,
+        headers,
+        credentials: 'include',
+      });
+      return res.json();
+    },
+    downloadUrl: (id: number | string) => `${API_BASE}/documents/${id}/download`,
+    delete: (id: number | string) =>
+      request<{ success: boolean }>(`/documents/${id}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // 6. Subscriptions & Catalog
+  subscriptions: {
+    list: () => request<{ success: boolean; data: any[] }>('/subscriptions'),
     subscribe: (appSlug: string, planSlug: string = 'professional', priceKes: number = 3800) =>
       request<{ success: boolean; data: any }>('/subscriptions', {
         method: 'POST',
         body: JSON.stringify({ appSlug, planSlug, priceKes }),
       }),
-
     cancel: (appSlug: string) =>
       request<{ success: boolean; data: any }>(`/subscriptions/${appSlug}`, {
         method: 'DELETE',
       }),
-
-    getEntitlements: () =>
-      request<{ success: boolean; data: any[] }>('/entitlements'),
   },
 
+  // 7. Orders & Proofs
   orders: {
-    list: () =>
-      request<{ success: boolean; data: any[] }>('/orders'),
-
+    list: () => request<{ success: boolean; data: any[] }>('/orders'),
     create: (order: { itemTitle: string; specs: string; quantity: number; totalKes: number; customerNotes?: string }) =>
       request<{ success: boolean; data: any }>('/orders', {
         method: 'POST',
         body: JSON.stringify(order),
       }),
-
     uploadArtwork: async (file: File) => {
       const formData = new FormData();
       formData.append('artwork', file);
@@ -90,12 +176,10 @@ export const api = {
       });
       return res.json();
     },
-
     approveProof: (orderId: string | number) =>
       request<{ success: boolean; data: any }>(`/proofs/${orderId}/approve`, {
         method: 'POST',
       }),
-
     requestRevision: (orderId: string | number, feedback: string) =>
       request<{ success: boolean; data: any }>(`/proofs/${orderId}/revision`, {
         method: 'POST',
@@ -103,16 +187,15 @@ export const api = {
       }),
   },
 
+  // 8. Billing & Payments
   billing: {
     getInvoices: () =>
       request<{ success: boolean; data: { invoices: any[]; payments: any[]; currency: string } }>('/billing/invoices'),
-
     payWithMpesa: (invoiceId: string | number, phone: string) =>
       request<{ success: boolean; message: string; data: any }>('/billing/pay', {
         method: 'POST',
         body: JSON.stringify({ invoiceId, channel: 'mobile_money', phone }),
       }),
-
     payWithCard: (invoiceId: string | number) =>
       request<{ success: boolean; message: string; data: any }>('/billing/pay', {
         method: 'POST',
@@ -120,6 +203,7 @@ export const api = {
       }),
   },
 
+  // SSO & OAuth
   oauth: {
     authorizeApp: (appSlug: string, clientId: string = 'client_pg_internal') =>
       request<{ success: boolean; data: { authCode: string; redirectUri: string; expiresInSeconds: number } }>('/oauth/authorize', {
@@ -137,5 +221,119 @@ export const api = {
       request<{ active: boolean; claims: any }>('/oauth/verify', {
         headers: { Authorization: `Bearer ${token}` },
       }),
+  },
+
+  // 9. Business Manager
+  business: {
+    getCustomers: () => request<{ success: boolean; data: any[] }>('/business/customers'),
+    createCustomer: (data: any) => request<{ success: boolean; data: any }>('/business/customers', { method: 'POST', body: JSON.stringify(data) }),
+    updateCustomer: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/business/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteCustomer: (id: number | string) => request<{ success: boolean }>(`/business/customers/${id}`, { method: 'DELETE' }),
+
+    getProducts: () => request<{ success: boolean; data: any[] }>('/business/products'),
+    createProduct: (data: any) => request<{ success: boolean; data: any }>('/business/products', { method: 'POST', body: JSON.stringify(data) }),
+
+    getInvoices: () => request<{ success: boolean; data: any[] }>('/business/invoices'),
+    createInvoice: (data: any) => request<{ success: boolean; data: any }>('/business/invoices', { method: 'POST', body: JSON.stringify(data) }),
+
+    getExpenses: () => request<{ success: boolean; data: any[] }>('/business/expenses'),
+    createExpense: (data: any) => request<{ success: boolean; data: any }>('/business/expenses', { method: 'POST', body: JSON.stringify(data) }),
+
+    getEmployees: () => request<{ success: boolean; data: any[] }>('/business/employees'),
+    createEmployee: (data: any) => request<{ success: boolean; data: any }>('/business/employees', { method: 'POST', body: JSON.stringify(data) }),
+
+    getOrders: () => request<{ success: boolean; data: any[] }>('/business/orders'),
+    createOrder: (data: any) => request<{ success: boolean; data: any }>('/business/orders', { method: 'POST', body: JSON.stringify(data) }),
+
+    getAppointments: () => request<{ success: boolean; data: any[] }>('/business/appointments'),
+    createAppointment: (data: any) => request<{ success: boolean; data: any }>('/business/appointments', { method: 'POST', body: JSON.stringify(data) }),
+
+    getPayments: () => request<{ success: boolean; data: any[] }>('/business/payments'),
+    createPayment: (data: any) => request<{ success: boolean; data: any }>('/business/payments', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // 10. Property Manager
+  property: {
+    getProperties: () => request<{ success: boolean; data: any[] }>('/property/properties'),
+    createProperty: (data: any) => request<{ success: boolean; data: any }>('/property/properties', { method: 'POST', body: JSON.stringify(data) }),
+    getTenants: () => request<{ success: boolean; data: any[] }>('/property/tenants'),
+    createTenant: (data: any) => request<{ success: boolean; data: any }>('/property/tenants', { method: 'POST', body: JSON.stringify(data) }),
+    getRentPayments: () => request<{ success: boolean; data: any[] }>('/property/rent-payments'),
+    createRentPayment: (data: any) => request<{ success: boolean; data: any }>('/property/rent-payments', { method: 'POST', body: JSON.stringify(data) }),
+    getMaintenance: () => request<{ success: boolean; data: any[] }>('/property/maintenance'),
+    createMaintenance: (data: any) => request<{ success: boolean; data: any }>('/property/maintenance', { method: 'POST', body: JSON.stringify(data) }),
+    updateMaintenance: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/property/maintenance/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // 11. Pharmacy Manager
+  pharmacy: {
+    getMedicines: () => request<{ success: boolean; data: any[] }>('/pharmacy/medicines'),
+    createMedicine: (data: any) => request<{ success: boolean; data: any }>('/pharmacy/medicines', { method: 'POST', body: JSON.stringify(data) }),
+    updateMedicine: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/pharmacy/medicines/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getSales: () => request<{ success: boolean; data: any[] }>('/pharmacy/sales'),
+    createSale: (data: any) => request<{ success: boolean; data: any }>('/pharmacy/sales', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // 12. Ticketing
+  ticketing: {
+    getTickets: () => request<{ success: boolean; data: any[] }>('/ticketing/tickets'),
+    createTicket: (data: any) => request<{ success: boolean; data: any }>('/ticketing/tickets', { method: 'POST', body: JSON.stringify(data) }),
+    updateTicket: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/ticketing/tickets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getMessages: (ticketId: number | string) => request<{ success: boolean; data: any[] }>(`/ticketing/tickets/${ticketId}/messages`),
+    addMessage: (ticketId: number | string, message: string) =>
+      request<{ success: boolean; data: any }>(`/ticketing/tickets/${ticketId}/messages`, { method: 'POST', body: JSON.stringify({ message }) }),
+  },
+
+  // 13. Booking
+  booking: {
+    getBookings: () => request<{ success: boolean; data: any[] }>('/booking/bookings'),
+    createBooking: (data: any) => request<{ success: boolean; data: any }>('/booking/bookings', { method: 'POST', body: JSON.stringify(data) }),
+    updateBooking: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/booking/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteBooking: (id: number | string) => request<{ success: boolean }>(`/booking/bookings/${id}`, { method: 'DELETE' }),
+  },
+
+  // 14. Inventory
+  inventory: {
+    getProducts: () => request<{ success: boolean; data: any[] }>('/inventory/products'),
+    createProduct: (data: any) => request<{ success: boolean; data: any }>('/inventory/products', { method: 'POST', body: JSON.stringify(data) }),
+    updateProduct: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/inventory/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteProduct: (id: number | string) => request<{ success: boolean }>(`/inventory/products/${id}`, { method: 'DELETE' }),
+  },
+
+  // 15. Legal Practice
+  legal: {
+    getMatters: () => request<{ success: boolean; data: any[] }>('/legal/matters'),
+    createMatter: (data: any) => request<{ success: boolean; data: any }>('/legal/matters', { method: 'POST', body: JSON.stringify(data) }),
+    updateMatter: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/legal/matters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // 16. School Manager
+  school: {
+    getStudents: () => request<{ success: boolean; data: any[] }>('/school/students'),
+    createStudent: (data: any) => request<{ success: boolean; data: any }>('/school/students', { method: 'POST', body: JSON.stringify(data) }),
+    updateStudent: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/school/students/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteStudent: (id: number | string) => request<{ success: boolean }>(`/school/students/${id}`, { method: 'DELETE' }),
+  },
+
+  // 17. Chama Manager
+  chama: {
+    getMembers: () => request<{ success: boolean; data: any[] }>('/chama/members'),
+    createMember: (data: any) => request<{ success: boolean; data: any }>('/chama/members', { method: 'POST', body: JSON.stringify(data) }),
+    updateMember: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/chama/members/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getContributions: () => request<{ success: boolean; data: any[] }>('/chama/contributions'),
+    createContribution: (data: any) => request<{ success: boolean; data: any }>('/chama/contributions', { method: 'POST', body: JSON.stringify(data) }),
+    getLoans: () => request<{ success: boolean; data: any[] }>('/chama/loans'),
+    createLoan: (data: any) => request<{ success: boolean; data: any }>('/chama/loans', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  // 18. Clinic Manager
+  clinic: {
+    getPatients: () => request<{ success: boolean; data: any[] }>('/clinic/patients'),
+    createPatient: (data: any) => request<{ success: boolean; data: any }>('/clinic/patients', { method: 'POST', body: JSON.stringify(data) }),
+    updatePatient: (id: number | string, data: any) => request<{ success: boolean; data: any }>(`/clinic/patients/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getAppointments: () => request<{ success: boolean; data: any[] }>('/clinic/appointments'),
+    createAppointment: (data: any) => request<{ success: boolean; data: any }>('/clinic/appointments', { method: 'POST', body: JSON.stringify(data) }),
+    getVisits: () => request<{ success: boolean; data: any[] }>('/clinic/visits'),
+    createVisit: (data: any) => request<{ success: boolean; data: any }>('/clinic/visits', { method: 'POST', body: JSON.stringify(data) }),
   },
 };
