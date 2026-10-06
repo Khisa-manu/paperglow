@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { WorkspaceAppSwitcher } from './components/WorkspaceAppSwitcher';
+import { WORKSPACE_VIEWS, AppViewType } from './data/appsNavigationConfig';
 import { HomePage } from './pages/HomePage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
@@ -219,6 +222,15 @@ export const App: React.FC = () => {
   }, [cartItems]);
 
   // Auth Handlers
+  const [appToast, setAppToast] = useState<string | null>(null);
+
+  const triggerAppToast = (msg: string) => {
+    setAppToast(msg);
+    setTimeout(() => {
+      setAppToast((prev) => (prev === msg ? null : prev));
+    }, 3200);
+  };
+
   const handleLogin = (email: string, name?: string, company?: string) => {
     setIsLoggedIn(true);
     if (name || company) {
@@ -229,10 +241,12 @@ export const App: React.FC = () => {
         email: email,
       }));
     }
+    triggerAppToast(`Signed in as ${name || email}`);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    triggerAppToast('Signed out of Paperglow account');
   };
 
   const handleUpdateProfile = (updated: Partial<CustomerProfile>) => {
@@ -240,6 +254,7 @@ export const App: React.FC = () => {
       ...prev,
       ...updated,
     }));
+    triggerAppToast('Account profile settings saved');
   };
 
   // Subscription Toggle Handler
@@ -247,6 +262,7 @@ export const App: React.FC = () => {
     const app = APPLICATIONS_CATALOG.find((a) => a.id === appId);
     if (subscribedAppIds.includes(appId)) {
       setSubscribedAppIds(subscribedAppIds.filter((id) => id !== appId));
+      if (app) triggerAppToast(`${app.name} removed from active subscriptions`);
     } else {
       setSubscribedAppIds([...subscribedAppIds, appId]);
       if (app) {
@@ -262,6 +278,7 @@ export const App: React.FC = () => {
           status: 'Paid',
         };
         setSoftwareOrders((prev) => [newOrder, ...prev]);
+        triggerAppToast(`Subscribed to ${app.name} workspace`);
       }
     }
   };
@@ -270,10 +287,12 @@ export const App: React.FC = () => {
   const handleAddToCart = (item: CartItem) => {
     setCartItems((prev) => [item, ...prev]);
     setIsCartOpen(true);
+    triggerAppToast(`Added "${item.title}" (${item.quantity} units) to cart`);
   };
 
   const handleRemoveCartItem = (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
+    triggerAppToast('Item removed from customization cart');
   };
 
   const handleCheckoutCart = () => {
@@ -297,6 +316,7 @@ export const App: React.FC = () => {
     setCartItems([]);
     setIsCartOpen(false);
     navigateAccount('merch');
+    triggerAppToast(`Order submitted! ${newOrders.length} print job(s) queued for proofing.`);
   };
 
   const handleApproveArtworkProof = (orderId: string) => {
@@ -307,6 +327,7 @@ export const App: React.FC = () => {
           : ord
       )
     );
+    triggerAppToast('Artwork proof approved and moved to production');
   };
 
   // Navigation Handlers
@@ -428,39 +449,86 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNavigateView = (view: AppViewType) => {
+    switch (view) {
+      case 'home':
+        return navigateHome();
+      case 'applications':
+        return navigateApplications();
+      case 'branding':
+        return navigateBranding();
+      case 'account':
+        return navigateAccount();
+      case 'invoice-generator':
+        return navigateInvoiceGenerator();
+      case 'business-manager':
+        return navigateBusinessManager();
+      case 'property-manager':
+        return navigatePropertyManager();
+      case 'pharmacy-manager':
+        return navigatePharmacyManager();
+      case 'party-manager':
+        return navigatePartyManager();
+      case 'ticketing':
+        return navigateTicketing();
+      case 'booking':
+        return navigateBooking();
+      case 'stock-inventory':
+        return navigateStockInventory();
+      case 'legal-practice':
+        return navigateLegalPractice();
+      case 'school-manager':
+        return navigateSchoolManager();
+      case 'chama-manager':
+        return navigateChamaManager();
+      case 'clinic-manager':
+        return navigateClinicManager();
+      default:
+        setCurrentView(view);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const currentDetailApp =
     APPLICATIONS_CATALOG.find((a) => a.id === selectedAppId) || APPLICATIONS_CATALOG[0];
 
+  const isWorkspaceView = WORKSPACE_VIEWS.includes(currentView);
+
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-[#0f1115] text-neutral-900 dark:text-neutral-100 transition-colors duration-150">
-      {/* Top Navbar */}
-      <Navbar
-        currentView={currentView}
-        isLoggedIn={isLoggedIn}
-        userName={customerProfile.name}
-        subscribedAppCount={subscribedAppIds.length}
-        cartCount={cartItems.length}
-        isDark={isDark}
-        toggleDarkMode={() => setIsDark(!isDark)}
-        onOpenAccount={navigateAccount}
-        onOpenCart={() => setIsCartOpen(true)}
-        onNavigateHome={navigateHome}
-        onNavigateApplications={navigateApplications}
-        onNavigateBranding={navigateBranding}
-        onNavigateInvoiceGenerator={navigateInvoiceGenerator}
-        onNavigateBusinessManager={navigateBusinessManager}
-        onNavigatePropertyManager={navigatePropertyManager}
-        onNavigatePharmacyManager={navigatePharmacyManager}
-        onNavigatePartyManager={navigatePartyManager}
-        onNavigateTicketing={navigateTicketing}
-        onNavigateBooking={navigateBooking}
-        onNavigateStockInventory={navigateStockInventory}
-        onNavigateLegalPractice={navigateLegalPractice}
-        onNavigateSchoolManager={navigateSchoolManager}
-        onNavigateChamaManager={navigateChamaManager}
-        onNavigateClinicManager={navigateClinicManager}
-        onNavigateSection={navigateToSection}
-      />
+      {/* Subtle Global Micro-interaction Toast */}
+      {appToast && (
+        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs font-semibold shadow-xl border border-neutral-700/80 dark:border-neutral-300 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <CheckCircle2 className="w-4 h-4 text-red-500 shrink-0" />
+          <span>{appToast}</span>
+        </div>
+      )}
+
+      {/* Top Navbar (Shown on Portal/Directory/Branding/Account pages; hidden inside standalone SaaS Workspaces so each app uses its own clean sidebar) */}
+      {!isWorkspaceView && (
+        <Navbar
+          currentView={currentView}
+          onNavigate={handleNavigateView}
+          onSelectAppDetail={navigateToAppDetail}
+          isLoggedIn={isLoggedIn}
+          customerName={customerProfile.name}
+          subscribedCount={subscribedAppIds.length}
+          cartCount={cartItems.length}
+          isDark={isDark}
+          onToggleTheme={() => setIsDark(!isDark)}
+          onOpenAccountModal={() => setIsAccountModalOpen(true)}
+          onOpenCart={() => setIsCartOpen(true)}
+        />
+      )}
+
+      {/* Compact App Switcher inside standalone SaaS Workspaces */}
+      {isWorkspaceView && (
+        <WorkspaceAppSwitcher
+          currentView={currentView}
+          onNavigate={handleNavigateView}
+          onSelectAppDetail={navigateToAppDetail}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="flex-grow">
@@ -698,10 +766,12 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <Footer
-        onNavigateSection={navigateToSection}
-        onOpenAccount={navigateAccount}
-      />
+      {!isWorkspaceView && (
+        <Footer
+          onNavigateSection={navigateToSection}
+          onOpenAccount={navigateAccount}
+        />
+      )}
 
       {/* Software Quick Preview Modal */}
       <AppDetailModal
