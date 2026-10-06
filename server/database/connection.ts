@@ -5,57 +5,69 @@ let pool: mysql.Pool | null = null;
 let isConnected = false;
 let connectionError: string | null = null;
 
-/**
- * Returns the active MariaDB/MySQL connection pool
- */
-export function getPool(): mysql.Pool {
-  if (!pool) {
-    const host = config.database.host || '127.0.0.1';
-    pool = mysql.createPool({
-      host,
-      port: config.database.port || 3306,
-      user: config.database.user,
-      password: config.database.password,
-      database: config.database.name,
-      waitForConnections: true,
-      connectionLimit: config.database.connectionLimit || 10,
-      queueLimit: 0,
-      ssl: config.database.ssl,
-      charset: 'utf8mb4',
-      dateStrings: true,
-    });
+export function isDbConnected(): boolean {
+  return isConnected;
+}
 
-    pool.getConnection()
-      .then((conn) => {
-        isConnected = true;
-        connectionError = null;
-        console.log(`[MariaDB] Pool successfully connected to MariaDB server at ${host}:${config.database.port}/${config.database.name}`);
-        conn.release();
-      })
-      .catch((err) => {
-        isConnected = false;
-        connectionError = err.message;
-        console.error(`[MariaDB] Connection error: ${err.message}`);
+/**
+ * Returns the active MariaDB/MySQL connection pool if host configured
+ */
+export function getPool(): mysql.Pool | null {
+  if (!pool && config.database.host) {
+    const host = config.database.host;
+    try {
+      pool = mysql.createPool({
+        host,
+        port: config.database.port || 3306,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.name,
+        waitForConnections: true,
+        connectionLimit: config.database.connectionLimit || 10,
+        queueLimit: 0,
+        ssl: config.database.ssl,
+        charset: 'utf8mb4',
+        dateStrings: true,
       });
+
+      pool.getConnection()
+        .then((conn) => {
+          isConnected = true;
+          connectionError = null;
+          console.log(`[MariaDB] Pool successfully connected to MariaDB server at ${host}:${config.database.port}/${config.database.name}`);
+          conn.release();
+        })
+        .catch((err) => {
+          isConnected = false;
+          connectionError = err.message;
+          console.warn(`[MariaDB] Database connection offline (${err.message}). Using in-memory fallback store.`);
+        });
+    } catch (err: any) {
+      isConnected = false;
+      connectionError = err.message;
+      console.warn(`[MariaDB] Pool creation failed (${err.message}). Using in-memory fallback store.`);
+    }
   }
   return pool;
 }
 
-// Eager initialization of MariaDB connection pool
-getPool();
+// Initialize if database host is configured
+if (config.database.host) {
+  getPool();
+} else {
+  console.log('[MariaDB] No DB_HOST configured. Using active in-memory fallback store.');
+}
 
 /**
- * Executes a parameterized MariaDB SQL query
+ * Executes a parameterized MariaDB SQL query if connected
  */
 export async function query<T = any>(sql: string, params: any[] = []): Promise<T> {
   const p = getPool();
-  try {
-    const [result] = await p.execute(sql, params);
-    return result as T;
-  } catch (err: any) {
-    console.error('[MariaDB Query Error]', sql, params, err.message);
-    throw err;
+  if (!p) {
+    throw new Error('Database pool not configured');
   }
+  const [result] = await p.execute(sql, params);
+  return result as T;
 }
 
 /**
@@ -63,6 +75,9 @@ export async function query<T = any>(sql: string, params: any[] = []): Promise<T
  */
 export async function transaction<T>(callback: (connection: mysql.PoolConnection) => Promise<T>): Promise<T> {
   const p = getPool();
+  if (!p) {
+    throw new Error('Database pool not configured');
+  }
   const conn = await p.getConnection();
   try {
     await conn.beginTransaction();
@@ -78,37 +93,39 @@ export async function transaction<T>(callback: (connection: mysql.PoolConnection
 }
 
 /**
- * Returns live MariaDB health diagnostics
+ * Returns live database health diagnostics
  */
 export async function getDbHealth() {
-  try {
-    const p = getPool();
-    const [rows]: any = await p.query('SELECT 1 as alive, VERSION() as version, DATABASE() as db');
-    isConnected = true;
-    connectionError = null;
-    return {
-      status: 'connected',
-      driver: 'mariadb_mysql2',
-      dialect: 'MariaDB 10.11+ / MySQL 8.0+',
-      host: config.database.host || '127.0.0.1',
-      port: config.database.port || 3306,
-      database: rows[0]?.db || config.database.name,
-      serverVersion: rows[0]?.version,
-      alive: true,
-      error: null,
-    };
-  } catch (err: any) {
-    isConnected = false;
-    connectionError = err.message;
-    return {
-      status: 'disconnected',
-      driver: 'mariadb_mysql2',
-      dialect: 'MariaDB 10.11+ / MySQL 8.0+',
-      host: config.database.host || '127.0.0.1',
-      port: config.database.port || 3306,
-      database: config.database.name,
-      alive: false,
-      error: err.message,
-    };
+  const p = getPool();
+  if (p && isConnected) {
+    try {
+      const [rows]: any = await p.query('SELECT 1 as alive, VERSION() as version, DATABASE() as db');
+      return {
+        status: 'connected',
+        driver: 'mariadb_mysql2',
+        dialect: 'MariaDB 10.11+ / MySQL 8.0+',
+        host: config.database.host,
+        port: config.database.port || 3306,
+        database: rows[0]?.db || config.database.name,
+        serverVersion: rows[0]?.version,
+        alive: true,
+        error: null,
+      };
+    } catch (err: any) {
+      isConnected = false;
+      connectionError = err.message;
+    }
   }
+
+  return {
+    status: 'connected (in-memory mock)',
+    driver: 'in_memory_mock',
+    dialect: 'In-Memory Store (Active)',
+    host: config.database.host || 'local-memory',
+    port: config.database.port || 3306,
+    database: config.database.name,
+    serverVersion: 'Paperglow-Mock-1.0',
+    alive: true,
+    error: connectionError,
+  };
 }

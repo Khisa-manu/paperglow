@@ -18,8 +18,31 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+// CORS Configuration
+const isProduction = config.nodeEnv === 'production';
+const allowedOrigins = isProduction
+  ? [
+      config.frontendUrl,
+      'https://paperglow.co.ke',
+      'https://www.paperglow.co.ke',
+    ].filter(Boolean)
+  : true;
+
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. curl, server-to-server, postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins === true) {
+      return callback(null, true);
+    }
+
+    if (Array.isArray(allowedOrigins) && allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
 }));
 

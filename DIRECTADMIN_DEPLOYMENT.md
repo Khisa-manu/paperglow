@@ -1,170 +1,109 @@
-# Paperglow Platform — DirectAdmin Production Deployment Guide
+# Paperglow — DirectAdmin Production Deployment Guide
 
-This guide details the complete process for deploying the Paperglow multi-tenant SaaS application on DirectAdmin web hosting (with CloudLinux Node.js Selector, Passenger, or PM2, and MySQL/MariaDB).
-
----
-
-## 1. System Requirements & Architecture
-
-- **Runtime**: Node.js 20+ or 22+ (LTS)
-- **Web Server**: Apache or Nginx with Phusion Passenger or reverse proxy (port forwarding)
-- **Database**: MySQL 8.0+ or MariaDB 10.5+
-- **Control Panel**: DirectAdmin (with "NodeJS Selector" or SSH Terminal access)
-- **Default Country & Currency**: Kenya (KE) · Kenyan Shillings (KES)
+This guide details the exact process for deploying the Paperglow platform on DirectAdmin at `paperglow.co.ke` using Node.js, PM2, Apache reverse proxy, and MySQL/MariaDB.
 
 ---
 
-## 2. Directory Structure on DirectAdmin
+## 1. Production `.env` File
 
-Deploy files to your DirectAdmin user domain folder, e.g.:
-
-```text
-/home/username/domains/paperglow.co.ke/
-├── public_html/             <-- Static production assets (dist) & .htaccess
-│   ├── assets/
-│   ├── index.html
-│   └── .htaccess
-├── app/                     <-- Node.js application root
-│   ├── server.ts
-│   ├── package.json
-│   ├── .env
-│   ├── server/
-│   │   ├── config/
-│   │   ├── database/
-│   │   ├── middleware/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   └── utils/
-│   ├── uploads/
-│   └── dist/
-```
-
----
-
-## 3. Database Setup in DirectAdmin
-
-1. Log into your **DirectAdmin** panel.
-2. Navigate to **MySQL Management** -> **Create New Database**.
-3. Create:
-   - **Database Name**: `username_paperglow`
-   - **Database User**: `username_pguser`
-   - **Password**: Generate a strong password (minimum 16 characters)
-4. Open **phpMyAdmin** from DirectAdmin.
-5. Select the database `username_paperglow`.
-6. Click **Import** and choose `/server/database/schema.sql` (or `/database/paperglow_directadmin_mysql_schema.sql`).
-7. Click **Go** to execute all table schemas, constraints, foreign keys, and indexes.
-
-Alternatively, you can run the CLI migration command after configuring `.env`:
-```bash
-npm run db:migrate
-npm run db:seed
-```
-
----
-
-## 4. Environment Variables (`.env`)
-
-In your application root (`/home/username/domains/paperglow.co.ke/app/.env`), configure:
+Place this file at `/home/<user>/domains/paperglow.co.ke/app/.env` (or your application root):
 
 ```ini
-# Server Configuration
-PORT=3000
-HOST=0.0.0.0
 NODE_ENV=production
+PORT=3000
 FRONTEND_URL=https://paperglow.co.ke
 
-# DirectAdmin MySQL Credentials
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=username_paperglow
-DB_USER=username_pguser
-DB_PASSWORD=YourStrongDatabasePassword123!
-DB_CONNECTION_LIMIT=15
+DB_NAME=papergl1_paperglow
+DB_USER=papergl1_paperglow
+DB_PASSWORD=YOUR_STRONG_DB_PASSWORD_HERE
 
-# Security Secrets
-JWT_SECRET=paperglow_directadmin_super_secret_jwt_key_at_least_32_characters_long
+# Cryptographically secure random secret (at least 32 characters)
+# Generate via: openssl rand -base64 48
+JWT_SECRET=YOUR_SECURE_JWT_SECRET_AT_LEAST_32_CHARS_LONG_2026_PRODUCTION
 
-# File Storage
 STORAGE_DRIVER=local
 STORAGE_DIR=./uploads
 ```
 
+> **Security Note**: Never commit `.env` to Git. Ensure `.gitignore` contains `.env`.
+
 ---
 
-## 5. Build & Installation Commands
+## 2. SSH Terminal Deployment Commands
 
-From your SSH terminal or DirectAdmin terminal:
+Run these commands in order from your SSH terminal on DirectAdmin:
 
 ```bash
-cd /home/username/domains/paperglow.co.ke/app
+# Navigate to application root
+cd /home/<user>/domains/paperglow.co.ke/app
 
-# 1. Install production dependencies
-npm install --production=false
+# 1. Install all dependencies (including devDependencies needed for build and tsx)
+npm install
 
-# 2. Build frontend React SPA bundle into ./dist
+# 2. Build the production React frontend
 npm run build
 
-# 3. Run database migrations
+# 3. Run database migrations to provision tables and constraints
 npm run db:migrate
 
-# 4. Optional: Seed initial system roles and superadmin
+# 4. Seed system roles, default applications, and initial superadmin
 npm run db:seed
+
+# 5. Start / Restart application with PM2
+pm2 start tsx --name "paperglow" -- server.ts
+# OR if using npm run start:
+# pm2 start npm --name "paperglow" -- run start
+
+# Save PM2 process list so it restarts automatically on server reboot
+pm2 save
 ```
 
 ---
 
-## 6. Configuring DirectAdmin Node.js App (Passenger)
+## 3. Apache Reverse Proxy Configuration (`.htaccess`)
 
-1. Open **DirectAdmin** -> **Setup Node.js App**.
-2. Click **Create Application**.
-3. Configure the following fields:
-   - **Node.js Version**: 22.x (or 20.x)
-   - **Application Mode**: `Production`
-   - **Application Root**: `domains/paperglow.co.ke/app`
-   - **Application URL**: `paperglow.co.ke`
-   - **Application Startup File**: `server.ts` (or `dist/server.js` if compiled)
-4. Under **Environment Variables**, add the keys defined in `.env` (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`).
-5. Click **Create** then click **Run JS Script** or **Restart**.
-
----
-
-## 7. Apache / OpenLiteSpeed `.htaccess` Configuration
-
-Create or update `/home/username/domains/paperglow.co.ke/public_html/.htaccess` to ensure all API calls proxy to Node.js on port 3000 and SPA routes fallback to `index.html`:
+Place this `.htaccess` file inside `/home/<user>/domains/paperglow.co.ke/public_html/.htaccess`:
 
 ```apache
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # 1. Proxy API routes to Node.js backend
-  RewriteRule ^api/(.*)$ http://127.0.0.1:3000/api/$1 [P,L]
-  RewriteRule ^uploads/(.*)$ http://127.0.0.1:3000/uploads/$1 [P,L]
+  # 1. Force HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # 2. Serve static files directly if they exist
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+  # 2. WebSocket Support
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) ws://127.0.0.1:3000/$1 [P,L]
 
-  # 3. Fallback to SPA index.html for frontend routing
-  RewriteRule ^ index.html [L]
+  # 3. Reverse Proxy All Traffic to Node.js Backend on Port 3000
+  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+</IfModule>
+
+<IfModule mod_proxy.c>
+  ProxyPreserveHost On
+  ProxyRequests Off
+  ProxyTimeout 300
 </IfModule>
 
 # Security Headers
 <IfModule mod_headers.c>
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "SAMEORIGIN"
-  Header set X-XSS-Protection "1; mode=block"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 ```
 
 ---
 
-## 8. Health Check Verification
+## 4. Health Check Command
 
-Test your backend health:
+Verify your live production deployment:
 
 ```bash
 curl -i https://paperglow.co.ke/api/health
@@ -175,45 +114,20 @@ Expected JSON response:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-10-06T12:00:00.000Z",
-  "uptimeSeconds": 142.8,
+  "timestamp": "2026-10-06T...",
+  "uptimeSeconds": 15.2,
   "environment": "production",
   "platform": "Paperglow SaaS Multi-Tenant Platform",
   "database": {
     "status": "connected",
-    "driver": "mysql2",
+    "driver": "mariadb_mysql2",
+    "dialect": "MariaDB 10.11+ / MySQL 8.0+",
     "host": "localhost",
-    "database": "username_paperglow",
+    "port": 3306,
+    "database": "papergl1_paperglow",
+    "alive": true,
     "error": null
   },
   "version": "1.0.0"
 }
 ```
-
----
-
-## 9. DirectAdmin Cron Job for Automated Reminders
-
-Paperglow includes an automated reminder dispatcher for:
-- Rent due dates
-- Chama loan repayments
-- Booking confirmations
-- Invoices past due
-
-In **DirectAdmin** -> **Cron Jobs**, add:
-```text
-0 8 * * * curl -s -X POST https://paperglow.co.ke/api/v1/notifications/cron -H "Authorization: Bearer <API_KEY>" > /dev/null 2>&1
-```
-
----
-
-## 10. Summary of Production Scripts
-
-| Command | Action |
-|---|---|
-| `npm run dev` | Runs full-stack dev server with Vite middleware on port 3000 |
-| `npm run build` | Compiles TypeScript and builds production frontend bundle |
-| `npm run db:migrate` | Runs MySQL schema migration against `DB_HOST` |
-| `npm run db:seed` | Populates default system roles and admin account |
-| `npm run start` | Boots backend with Node.js in production mode |
-| `GET /api/health` | Diagnostic endpoint verifying server & MySQL connection status |

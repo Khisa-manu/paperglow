@@ -6,13 +6,33 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '../../');
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isProduction = nodeEnv === 'production';
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (isProduction) {
+    if (!secret || secret.trim().length < 32) {
+      throw new Error(
+        'FATAL: JWT_SECRET environment variable is missing or too short. A secure secret of at least 32 characters is required in production.'
+      );
+    }
+    return secret.trim();
+  }
+  if (!secret) {
+    console.warn('[Security Warning] JWT_SECRET not configured. Using development fallback key.');
+    return 'paperglow_dev_only_ephemeral_jwt_secret_not_for_production_2026';
+  }
+  return secret.trim();
+}
+
 export const config = {
-  port: Number(process.env.PORT) || 3000,
+  port: isProduction ? (Number(process.env.PORT) || 3000) : 3000,
   host: process.env.HOST || '0.0.0.0',
-  nodeEnv: process.env.NODE_ENV || 'development',
-  jwtSecret: process.env.JWT_SECRET || 'paperglow_directadmin_super_secret_jwt_key_2026',
+  nodeEnv,
+  jwtSecret: getJwtSecret(),
   jwtExpiresIn: '7d',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  frontendUrl: process.env.FRONTEND_URL || (isProduction ? 'https://paperglow.co.ke' : 'http://localhost:3000'),
   
   // Database settings (MySQL / MariaDB on DirectAdmin)
   database: {
