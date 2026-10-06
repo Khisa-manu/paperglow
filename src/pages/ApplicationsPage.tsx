@@ -20,6 +20,7 @@ import {
   Package,
   Sparkles,
   Scale,
+  GraduationCap,
 } from 'lucide-react';
 
 interface ApplicationsPageProps {
@@ -51,6 +52,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
     'Operations & Support',
     'Warehouse & Inventory',
     'Legal & Practice Management',
+    'Education & Institutions',
   ];
 
   const getAppIcon = (iconName: string) => {
@@ -79,6 +81,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
         return <Package className="w-5 h-5 text-red-600" />;
       case 'Scale':
         return <Scale className="w-5 h-5 text-red-600" />;
+      case 'GraduationCap':
+        return <GraduationCap className="w-5 h-5 text-red-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-red-600" />;
     }

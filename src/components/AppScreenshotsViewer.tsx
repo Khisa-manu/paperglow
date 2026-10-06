@@ -476,6 +476,52 @@ export const AppScreenshotsViewer: React.FC<AppScreenshotsViewerProps> = ({
               </div>
             </div>
           )}
+
+          {current.previewType === 'school' && (
+            <div className="space-y-3 text-xs bg-white dark:bg-[#161a22] p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">
+                    Nairobi Hillview Academy • Form 4 Candidates Roll
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 font-bold text-[10px]">
+                    NEMIS 11048821
+                  </span>
+                </div>
+                <span className="text-emerald-600 font-mono font-bold text-[11px]">Daily Roll Call: 96% Present</span>
+              </div>
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Amani Brian Mwangi (Adm: NHA-2023-0142)
+                    </div>
+                    <div className="text-neutral-500 text-[11px]">Form 4 East • Pure Sciences Stream • Boarder</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold text-[10px]">
+                      Mean Grade: A (83.5%)
+                    </span>
+                    <div className="text-neutral-400 text-[10px] mt-0.5">Fees: Cleared (KES 0)</div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Faith Muthoni Wanjiku (Adm: NHA-2023-0148)
+                    </div>
+                    <div className="text-neutral-500 text-[11px]">Form 4 East • Pure Sciences Stream • Boarder</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                      Mean Grade: A (81.9%)
+                    </span>
+                    <div className="text-amber-600 font-mono text-[10px] mt-0.5 font-bold">Arrears: KES 12,500</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Caption */}
