@@ -23,6 +23,7 @@ import {
   FileCheck,
   FileSpreadsheet,
   Building2,
+  LifeBuoy,
   Clock,
   Check,
 } from 'lucide-react';
@@ -62,6 +63,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         return <Users className="w-5 h-5 text-red-600" />;
       case 'Kanban':
         return <Kanban className="w-5 h-5 text-red-600" />;
+      case 'LifeBuoy':
+        return <LifeBuoy className="w-5 h-5 text-red-600" />;
       default:
         return <FileCheck className="w-5 h-5 text-red-600" />;
     }

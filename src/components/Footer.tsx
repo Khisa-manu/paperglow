@@ -49,6 +49,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateSection, onOpenAccount
               </li>
               <li>
                 <button onClick={() => onNavigateSection('applications')} className="hover:text-red-600 transition-colors">
+                  Paperglow Ticketing &amp; SLA
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigateSection('applications')} className="hover:text-red-600 transition-colors">
                   Paperglow Team &amp; Permissions
                 </button>
               </li>

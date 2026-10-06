@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing';
   isLoggedIn: boolean;
   userName?: string;
   subscribedAppCount: number;
@@ -19,6 +19,7 @@ interface NavbarProps {
   onNavigatePropertyManager?: () => void;
   onNavigatePharmacyManager?: () => void;
   onNavigatePartyManager?: () => void;
+  onNavigateTicketing?: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
@@ -40,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigatePropertyManager,
   onNavigatePharmacyManager,
   onNavigatePartyManager,
+  onNavigateTicketing,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -151,6 +153,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Party Manager</span>
                 <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
                   Civic
+                </span>
+              </button>
+            )}
+            {onNavigateTicketing && (
+              <button
+                onClick={onNavigateTicketing}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  (currentView as string) === 'ticketing'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Ticketing</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white">
+                  Support
                 </span>
               </button>
             )}
@@ -319,6 +336,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Paperglow Party Manager</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
                     Civic
+                  </span>
+                </button>
+              )}
+              {onNavigateTicketing && (
+                <button
+                  onClick={() => {
+                    onNavigateTicketing();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md flex items-center justify-between"
+                >
+                  <span>Paperglow Ticketing</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
+                    Support
                   </span>
                 </button>
               )}
