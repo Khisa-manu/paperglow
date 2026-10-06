@@ -337,6 +337,55 @@ export const AppScreenshotsViewer: React.FC<AppScreenshotsViewerProps> = ({
               </div>
             </div>
           )}
+
+          {current.previewType === 'booking' && (
+            <div className="space-y-3 text-xs bg-white dark:bg-[#161a22] p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">
+                    Today's Schedule &amp; Client Appointments
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[10px]">
+                    Live Calendar
+                  </span>
+                </div>
+                <span className="text-neutral-500 text-[11px]">KES 28,500 Gross • 6 Bookings</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Brian Omondi
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 text-[10px] font-bold">
+                      Confirmed
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-neutral-500">Executive Cut &amp; Hot Towel Treatment</div>
+                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-neutral-200/60 dark:border-neutral-800">
+                    <span className="font-mono text-neutral-600 dark:text-neutral-400">10:30 – 11:15 • Daniel K.</span>
+                    <span className="font-bold text-red-600">KES 2,500</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Sarah Muthoni
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 text-[10px] font-bold">
+                      Paid Deposit
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-neutral-500">Deep Tissue &amp; Hot Stone Therapy</div>
+                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-neutral-200/60 dark:border-neutral-800">
+                    <span className="font-mono text-neutral-600 dark:text-neutral-400">14:00 – 15:00 • Mercy A.</span>
+                    <span className="font-bold text-red-600">KES 5,500</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Caption */}

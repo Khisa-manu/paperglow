@@ -65,6 +65,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         return <Kanban className="w-5 h-5 text-red-600" />;
       case 'LifeBuoy':
         return <LifeBuoy className="w-5 h-5 text-red-600" />;
+      case 'Clock':
+        return <Clock className="w-5 h-5 text-red-600" />;
       default:
         return <FileCheck className="w-5 h-5 text-red-600" />;
     }
