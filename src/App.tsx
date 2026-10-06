@@ -15,6 +15,8 @@ import { TicketingPage } from './pages/TicketingPage';
 import { BookingPage } from './pages/BookingPage';
 import { StockInventoryPage } from './pages/StockInventoryPage';
 import { LegalPracticePage } from './pages/LegalPracticePage';
+import { SchoolManagerPage } from './pages/SchoolManagerPage';
+import { ChamaManagerPage } from './pages/ChamaManagerPage';
 import { AppDetailModal } from './components/AppDetailModal';
 import { ProductConfiguratorModal } from './components/ProductConfiguratorModal';
 import { CartDrawer } from './components/CartDrawer';
@@ -36,7 +38,7 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory' | 'legal-practice'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory' | 'legal-practice' | 'school-manager' | 'chama-manager'>('home');
   const [selectedAppId, setSelectedAppId] = useState<string>('paperglow-business-manager');
 
   // Customer Account & Authentication State
@@ -52,7 +54,7 @@ export const App: React.FC = () => {
 
   const [subscribedAppIds, setSubscribedAppIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('paperglow_subscribed_apps');
-    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-property-manager', 'paperglow-pharmacy-manager', 'paperglow-party-manager', 'paperglow-ticketing', 'paperglow-booking', 'paperglow-stock-inventory', 'paperglow-legal-practice', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
+    return saved ? JSON.parse(saved) : ['paperglow-business-manager', 'paperglow-property-manager', 'paperglow-pharmacy-manager', 'paperglow-party-manager', 'paperglow-ticketing', 'paperglow-booking', 'paperglow-stock-inventory', 'paperglow-legal-practice', 'paperglow-school-manager', 'paperglow-chama-manager', 'paperglow-invoice-generator', 'paperglow-invoice', 'paperglow-crm'];
   });
 
   const [softwareOrders, setSoftwareOrders] = useState<SoftwareOrder[]>(() => {
@@ -128,6 +130,16 @@ export const App: React.FC = () => {
       }
       if (hash === 'legal-practice' || hash === 'legal' || hash === 'law' || hash === 'advocate' || hash === 'advocates') {
         setCurrentView('legal-practice');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (hash === 'school-manager' || hash === 'school' || hash === 'academy' || hash === 'shule') {
+        setCurrentView('school-manager');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (hash === 'chama-manager' || hash === 'chama' || hash === 'ushirika' || hash === 'sacco') {
+        setCurrentView('chama-manager');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -372,6 +384,18 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigateSchoolManager = () => {
+    window.location.hash = 'school-manager';
+    setCurrentView('school-manager');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateChamaManager = () => {
+    window.location.hash = 'chama-manager';
+    setCurrentView('chama-manager');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const navigateBranding = () => {
     window.location.hash = 'branding';
     setCurrentView('branding');
@@ -420,6 +444,8 @@ export const App: React.FC = () => {
         onNavigateBooking={navigateBooking}
         onNavigateStockInventory={navigateStockInventory}
         onNavigateLegalPractice={navigateLegalPractice}
+        onNavigateSchoolManager={navigateSchoolManager}
+        onNavigateChamaManager={navigateChamaManager}
         onNavigateSection={navigateToSection}
       />
 
@@ -461,6 +487,10 @@ export const App: React.FC = () => {
                 navigateStockInventory();
               } else if (app.id === 'paperglow-legal-practice') {
                 navigateLegalPractice();
+              } else if (app.id === 'paperglow-school-manager') {
+                navigateSchoolManager();
+              } else if (app.id === 'paperglow-chama-manager') {
+                navigateChamaManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -494,6 +524,10 @@ export const App: React.FC = () => {
                 navigateStockInventory();
               } else if (app.id === 'paperglow-legal-practice') {
                 navigateLegalPractice();
+              } else if (app.id === 'paperglow-school-manager') {
+                navigateSchoolManager();
+              } else if (app.id === 'paperglow-chama-manager') {
+                navigateChamaManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {
@@ -568,6 +602,18 @@ export const App: React.FC = () => {
           />
         )}
 
+        {currentView === 'school-manager' && (
+          <SchoolManagerPage
+            onBackToPaperglow={navigateHome}
+          />
+        )}
+
+        {currentView === 'chama-manager' && (
+          <ChamaManagerPage
+            onBackToPaperglow={navigateHome}
+          />
+        )}
+
         {currentView === 'invoice-generator' && (
           <InvoiceGeneratorPage
             onBackToDirectory={navigateApplications}
@@ -609,6 +655,10 @@ export const App: React.FC = () => {
                 navigateStockInventory();
               } else if (app.id === 'paperglow-legal-practice') {
                 navigateLegalPractice();
+              } else if (app.id === 'paperglow-school-manager') {
+                navigateSchoolManager();
+              } else if (app.id === 'paperglow-chama-manager') {
+                navigateChamaManager();
               } else if (app.id === 'paperglow-invoice-generator') {
                 navigateInvoiceGenerator();
               } else {

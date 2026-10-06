@@ -61,6 +61,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         return <FileSpreadsheet className="w-5 h-5 text-red-600" />;
       case 'ReceiptText':
         return <ReceiptText className="w-5 h-5 text-red-600" />;
+      case 'Users2':
       case 'Users':
         return <Users className="w-5 h-5 text-red-600" />;
       case 'Kanban':

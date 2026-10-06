@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory' | 'legal-practice' | 'school-manager';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory' | 'legal-practice' | 'school-manager' | 'chama-manager';
   isLoggedIn: boolean;
   userName?: string;
   subscribedAppCount: number;
@@ -24,6 +24,7 @@ interface NavbarProps {
   onNavigateStockInventory?: () => void;
   onNavigateLegalPractice?: () => void;
   onNavigateSchoolManager?: () => void;
+  onNavigateChamaManager?: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
@@ -50,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigateStockInventory,
   onNavigateLegalPractice,
   onNavigateSchoolManager,
+  onNavigateChamaManager,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -236,6 +238,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>School</span>
                 <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white">
                   CBC
+                </span>
+              </button>
+            )}
+            {onNavigateChamaManager && (
+              <button
+                onClick={onNavigateChamaManager}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  (currentView as string) === 'chama-manager'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Chama</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                  Co-op
                 </span>
               </button>
             )}
@@ -474,6 +491,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Paperglow School Manager</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
                     CBC &amp; High School
+                  </span>
+                </button>
+              )}
+              {onNavigateChamaManager && (
+                <button
+                  onClick={() => {
+                    onNavigateChamaManager();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md flex items-center justify-between"
+                >
+                  <span>Paperglow Chama Manager</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                    Chama &amp; Sacco
                   </span>
                 </button>
               )}

@@ -102,3 +102,40 @@
 .btn-primary-red:hover {
   background-color: #b91c1c;
 }
+
+/* Print optimization for Chama Membership Documents & Reports */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  nav, header, aside, footer, .no-print, button, select, input {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  #chama-certificate-print {
+    box-shadow: none !important;
+    border-color: #991b1b !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0 auto !important;
+  }
+
+  #chama-idcard-print {
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0 auto !important;
+  }
+}

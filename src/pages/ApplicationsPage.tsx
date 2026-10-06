@@ -83,6 +83,9 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
         return <Scale className="w-5 h-5 text-red-600" />;
       case 'GraduationCap':
         return <GraduationCap className="w-5 h-5 text-red-600" />;
+      case 'Users2':
+      case 'Users':
+        return <Users className="w-5 h-5 text-red-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-red-600" />;
     }
