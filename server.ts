@@ -74,7 +74,7 @@ async function startServer() {
   app.listen(config.port, '0.0.0.0', () => {
     console.log(`[Paperglow] Multi-Tenant SaaS Backend running on http://0.0.0.0:${config.port}`);
     console.log(`[Paperglow] Health Check: http://0.0.0.0:${config.port}/api/health`);
-    console.log(`[Paperglow] Database Driver: ${config.database.host ? 'MySQL2' : 'Embedded JSON Store'}`);
+    console.log(`[Paperglow] Database Driver: MariaDB / MySQL (mysql2 pool)`);
   });
 }
 

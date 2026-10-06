@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
 import { getDbHealth } from '../database/connection';
-import { sendSuccess } from '../utils/response';
 
 export const healthController = {
-  check(req: Request, res: Response) {
-    const dbHealth = getDbHealth();
-    const isHealthy = dbHealth.status === 'connected' || dbHealth.status === 'mariadb_engine_ready';
+  async check(req: Request, res: Response) {
+    const dbHealth = await getDbHealth();
+    const isHealthy = dbHealth.alive === true;
 
     const healthData = {
       status: isHealthy ? 'healthy' : 'degraded',

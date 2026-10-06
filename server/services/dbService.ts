@@ -15,7 +15,7 @@ export interface QueryOptions {
 
 export const dbService = {
   /**
-   * Find records using SQL with multi-tenant organization filtering
+   * Find records using parameterized MariaDB SQL with multi-tenant organization filtering
    */
   async find<T = any>(table: string, filters: QueryFilters = {}, options: QueryOptions = {}): Promise<T[]> {
     const whereClauses: string[] = [];
@@ -23,21 +23,21 @@ export const dbService = {
 
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && value !== null) {
-        whereClauses.push(`${key} = ?`);
+        whereClauses.push(`\`${key}\` = ?`);
         params.push(value);
       }
     }
 
-    let sql = `SELECT * FROM ${table}`;
+    let sql = `SELECT * FROM \`${table}\``;
     if (whereClauses.length > 0) {
       sql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
     if (options.orderBy) {
       const dir = options.orderDirection === 'ASC' ? 'ASC' : 'DESC';
-      sql += ` ORDER BY ${options.orderBy} ${dir}`;
+      sql += ` ORDER BY \`${options.orderBy}\` ${dir}`;
     } else {
-      sql += ` ORDER BY id DESC`;
+      sql += ` ORDER BY \`id\` DESC`;
     }
 
     if (options.limit) {
@@ -47,11 +47,12 @@ export const dbService = {
       }
     }
 
-    return query<T>(sql, params);
+    const rows = await query<any[]>(sql, params);
+    return Array.isArray(rows) ? (rows as T[]) : [];
   },
 
   /**
-   * Find a single record by ID with SQL, enforcing organization isolation
+   * Find a single record by ID with MariaDB SQL, enforcing organization isolation
    */
   async findById<T = any>(table: string, id: number | string, orgId?: number | string): Promise<T | null> {
     const filters: QueryFilters = { id };
@@ -63,7 +64,7 @@ export const dbService = {
   },
 
   /**
-   * Find one record matching filters via SQL
+   * Find one record matching filters via MariaDB SQL
    */
   async findOne<T = any>(table: string, filters: QueryFilters): Promise<T | null> {
     const results = await this.find<T>(table, filters, { limit: 1 });
@@ -71,47 +72,68 @@ export const dbService = {
   },
 
   /**
-   * Create a new record using SQL INSERT
+   * Create a new record using MariaDB parameterized SQL INSERT
    */
   async create<T = any>(table: string, data: Record<string, any>): Promise<T> {
-    const now = new Date().toISOString();
     const recordUuid = data.uuid || crypto.randomUUID();
 
     const insertData: Record<string, any> = {
       ...data,
       uuid: recordUuid,
-      created_at: data.created_at || now,
     };
 
     const keys = Object.keys(insertData);
-    const fields = keys.join(', ');
+    const fields = keys.map((k) => `\`${k}\``).join(', ');
     const placeholders = keys.map(() => '?').join(', ');
-    const values = keys.map((k) => insertData[k]);
+    const values = keys.map((k) => {
+      const v = insertData[k];
+      if (typeof v === 'object' && v !== null && !(v instanceof Date)) {
+        return JSON.stringify(v);
+      }
+      return v;
+    });
 
-    const sql = `INSERT INTO ${table} (${fields}) VALUES (${placeholders})`;
-    await query(sql, values);
+    const sql = `INSERT INTO \`${table}\` (${fields}) VALUES (${placeholders})`;
+    const result: any = await query(sql, values);
 
-    // Fetch the newly inserted record
-    const created = await this.findOne<T>(table, { uuid: recordUuid });
+    // Fetch the newly inserted record directly from MariaDB
+    let created: any = null;
+    if (recordUuid) {
+      created = await this.findOne<T>(table, { uuid: recordUuid });
+    }
+    if (!created && result?.insertId) {
+      created = await this.findById<T>(table, result.insertId);
+    }
     return created || (insertData as T);
   },
 
   /**
-   * Update a record using SQL UPDATE, strictly enforcing organization isolation
+   * Update a record using MariaDB parameterized SQL UPDATE, strictly enforcing organization isolation
    */
   async update<T = any>(table: string, id: number | string, data: Record<string, any>, orgId?: number | string): Promise<T | null> {
-    const now = new Date().toISOString();
-    const updateData = { ...data, updated_at: now };
+    const updateData = { ...data };
+    delete updateData.id;
+    delete updateData.created_at;
 
     const keys = Object.keys(updateData);
-    const setClauses = keys.map((k) => `${k} = ?`).join(', ');
-    const values = keys.map((k) => updateData[k]);
+    if (keys.length === 0) {
+      return this.findById<T>(table, id, orgId);
+    }
 
-    let sql = `UPDATE ${table} SET ${setClauses} WHERE id = ?`;
+    const setClauses = keys.map((k) => `\`${k}\` = ?`).join(', ');
+    const values = keys.map((k) => {
+      const v = updateData[k];
+      if (typeof v === 'object' && v !== null && !(v instanceof Date)) {
+        return JSON.stringify(v);
+      }
+      return v;
+    });
+
+    let sql = `UPDATE \`${table}\` SET ${setClauses} WHERE \`id\` = ?`;
     values.push(id);
 
     if (orgId !== undefined) {
-      sql += ` AND organization_id = ?`;
+      sql += ` AND \`organization_id\` = ?`;
       values.push(orgId);
     }
 
@@ -120,23 +142,23 @@ export const dbService = {
   },
 
   /**
-   * Delete a record using SQL DELETE, strictly enforcing organization isolation
+   * Delete a record using MariaDB parameterized SQL DELETE, strictly enforcing organization isolation
    */
   async delete(table: string, id: number | string, orgId?: number | string): Promise<boolean> {
-    let sql = `DELETE FROM ${table} WHERE id = ?`;
+    let sql = `DELETE FROM \`${table}\` WHERE \`id\` = ?`;
     const values: any[] = [id];
 
     if (orgId !== undefined) {
-      sql += ` AND organization_id = ?`;
+      sql += ` AND \`organization_id\` = ?`;
       values.push(orgId);
     }
 
-    await query(sql, values);
-    return true;
+    const result: any = await query(sql, values);
+    return (result?.affectedRows ?? 0) > 0;
   },
 
   /**
-   * Count records using SQL COUNT(*)
+   * Count records using MariaDB parameterized SQL COUNT(*)
    */
   async count(table: string, filters: QueryFilters = {}): Promise<number> {
     const whereClauses: string[] = [];
@@ -144,21 +166,20 @@ export const dbService = {
 
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && value !== null) {
-        whereClauses.push(`${key} = ?`);
+        whereClauses.push(`\`${key}\` = ?`);
         params.push(value);
       }
     }
 
-    let sql = `SELECT COUNT(*) as total FROM ${table}`;
+    let sql = `SELECT COUNT(*) as total FROM \`${table}\``;
     if (whereClauses.length > 0) {
       sql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
-    const res: any = await query(sql, params);
-    const totalRow = res[0];
-    if (typeof totalRow === 'object' && totalRow !== null) {
-      return Number(totalRow.total || totalRow['COUNT(*)'] || 0);
+    const rows: any = await query(sql, params);
+    if (Array.isArray(rows) && rows.length > 0) {
+      return Number(rows[0].total ?? 0);
     }
-    return Number(totalRow || 0);
+    return 0;
   },
 };
