@@ -3,7 +3,7 @@ export interface AppScreenshot {
   title: string;
   caption: string;
   badge: string;
-  previewType: 'invoice' | 'crm' | 'kanban' | 'team' | 'contracts' | 'desk' | 'booking';
+  previewType: 'invoice' | 'crm' | 'kanban' | 'team' | 'contracts' | 'desk' | 'booking' | 'inventory';
 }
 
 export interface PricingTier {
@@ -22,7 +22,7 @@ export interface BusinessApp {
   shortDescription: string;
   description: string;
   mainBenefit: string;
-  category: 'Finance & Payments' | 'Sales & CRM' | 'Projects & Work' | 'Organization & HR' | 'Operations & Support' | 'Operations & Services';
+  category: 'Finance & Payments' | 'Sales & CRM' | 'Projects & Work' | 'Organization & HR' | 'Operations & Support' | 'Operations & Services' | 'Warehouse & Inventory';
   monthlyPrice: number;
   annualPrice: number;
   iconName: string;

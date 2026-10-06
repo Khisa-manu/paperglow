@@ -17,6 +17,7 @@ import {
   HelpCircle,
   LifeBuoy,
   Clock,
+  Package,
   Sparkles,
 } from 'lucide-react';
 
@@ -71,6 +72,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
         return <LifeBuoy className="w-5 h-5 text-red-600" />;
       case 'Clock':
         return <Clock className="w-5 h-5 text-red-600" />;
+      case 'Package':
+        return <Package className="w-5 h-5 text-red-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-red-600" />;
     }

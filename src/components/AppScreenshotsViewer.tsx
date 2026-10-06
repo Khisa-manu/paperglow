@@ -386,6 +386,50 @@ export const AppScreenshotsViewer: React.FC<AppScreenshotsViewerProps> = ({
               </div>
             </div>
           )}
+
+          {current.previewType === 'inventory' && (
+            <div className="space-y-3 text-xs bg-white dark:bg-[#161a22] p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">
+                    Warehouse Inventory &amp; Stock Ledger
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-[10px]">
+                    KES 465,000 Total Valuation
+                  </span>
+                </div>
+                <span className="text-amber-600 font-bold text-[11px]">2 Items Low Stock</span>
+              </div>
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Industrial LED High-Bay Floodlight 150W (IP66)
+                    </div>
+                    <div className="text-neutral-500 font-mono text-[11px]">SKU: PG-INV-1001 • Barcode: 6161100348123 • Bay A</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono font-bold text-emerald-600 text-sm">28 Pcs In Stock</div>
+                    <div className="text-neutral-400 text-[10px]">Cost: KES 4,500 | Sell: KES 6,800</div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Brushless Cordless Impact Drill 18V Kit
+                    </div>
+                    <div className="text-neutral-500 font-mono text-[11px]">SKU: PG-INV-1004 • Barcode: 6161100348185 • Lockable Cage</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold text-[10px]">
+                      Out of Stock (0 Sets)
+                    </span>
+                    <div className="text-neutral-400 text-[10px]">PO-8811 Pending (10 Sets)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Caption */}
