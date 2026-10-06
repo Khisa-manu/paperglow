@@ -1329,6 +1329,103 @@ export const APPLICATIONS_CATALOG: BusinessApp[] = [
       },
     ],
   },
+  {
+    id: 'paperglow-legal-practice',
+    name: 'Paperglow Legal Practice Manager',
+    tagline: 'Law firm practice management, court docketing, statutory deadlines, matter files & fee notes in KES',
+    shortDescription: 'Professional practice management system for advocates, lawyers, and law firms with Milimani court diary, e-filing deadlines, document archiving, and KES billing.',
+    description: 'Paperglow Legal Practice Manager is an enterprise-grade legal practice operating system engineered for Kenyan advocates, law firms, and legal counsel. Streamline your master matter files across commercial litigation, conveyancing, labour relations, and land disputes. Track court dates and judge appearances at Milimani Commercial Courts and Environment & Land Court, manage e-filing statutory deadlines with automated countdowns, track billable advocate hours, organize stamped pleadings and deeds, and issue professional fee notes under the Advocates Remuneration Order in Kenyan Shillings (KES).',
+    mainBenefit: 'Never miss a court date or statutory filing deadline, maintain audit-proof client trust ledgers, and streamline advocate billing in KES.',
+    category: 'Legal & Practice Management',
+    monthlyPrice: 69,
+    annualPrice: 55,
+    iconName: 'Scale',
+    version: 'v4.2',
+    rating: 4.99,
+    userCountText: '1,800+ matters docketed',
+    features: [
+      'Master case files registry with cause numbers, court division, presiding judge, and dispute claim valuation in KES',
+      'Court diary tracking Milimani High Court, ELC, ELRC hearings, virtual Teams courtroom links, and mentor appearances',
+      'Statutory filing limitations and e-filing submission deadlines watch with priority alerts and countdowns',
+      'Client directory with corporate institutional profiles, KRA PIN certificates, linked matters, and billing ledgers',
+      'Pleadings and deeds document repository with category indexing, version controls, and secure download simulation',
+      'Advocate billable time tracking with LSK scale rates, activity categories, and work-in-progress (WIP) summaries',
+      'Professional fee note generator with Advocates Remuneration Order scales, 16% VAT, disbursements, and M-Pesa tracking',
+      'Roll of Advocates and staff directory with LSK admission numbers, practicing certificate verification, and signing permissions',
+    ],
+    securityHighlights: [
+      'Confidential attorney-client privilege protection with browser-local encryption',
+      'Granular judicial pleading signing controls and document deletion safeguards',
+      'Strict trust account separation compliant with Law Society of Kenya guidelines',
+    ],
+    screenshots: [
+      {
+        id: 'leg-1',
+        title: 'Practice Operations Cockpit',
+        caption: 'Live tracking of active litigation matters, Milimani court hearings, and fee recoveries in KES.',
+        badge: 'Case Cockpit',
+        previewType: 'legal',
+      },
+      {
+        id: 'leg-2',
+        title: 'Court Diary & Statutory Deadlines',
+        caption: 'Manage court appearance dockets, virtual Teams links, and statutory 14-day filing limitations.',
+        badge: 'Court Diary',
+        previewType: 'legal',
+      },
+      {
+        id: 'leg-3',
+        title: 'Advocate Fee Notes & Trust Ledger',
+        caption: 'Generate professional fee notes with 16% VAT, court disbursements, and M-Pesa Paybill reconciliations.',
+        badge: 'KES Fee Notes',
+        previewType: 'legal',
+      },
+    ],
+    pricingTiers: [
+      {
+        name: 'Chambers Solo / Boutique',
+        monthlyPrice: 69,
+        annualPrice: 55,
+        description: 'For solo practitioners, boutique litigation counsel, and specialized commercial law chambers.',
+        features: [
+          'All 13 legal practice management modules',
+          'Up to 5 advocates, pupils & litigation clerks',
+          'Milimani & national court diary with virtual links',
+          'Filing deadline countdowns & SMS alerts',
+          'Professional fee notes in KES with 16% VAT',
+        ],
+      },
+      {
+        name: 'Partnership Enterprise LLP',
+        monthlyPrice: 129,
+        annualPrice: 99,
+        popular: true,
+        description: 'For multi-partner firms, corporate legal departments, and full-service commercial practices.',
+        features: [
+          'Everything in Chambers Solo',
+          'Unlimited advocates, associates, pupils, and clerks',
+          'Full trust account reconciliation & aging receivables',
+          'Matter-level document version audit trails',
+          'Advocate billable utilization leaderboards',
+          'Priority onboarding & custom court pleading formats',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is Paperglow Legal Practice Manager tailored for Kenyan courts and LSK standards?',
+        answer: 'Yes! It is specifically built for Kenyan legal practitioners, featuring cause numbers (e.g. HCCOMM, ELC, ELRC), Milimani Commercial Courts and subordinate registries, LSK admission rolls, 16% VAT calculation, and fee note generation under the Advocates Remuneration Order.',
+      },
+      {
+        question: 'Does the application provide legal advice?',
+        answer: 'No. Paperglow Legal Practice Manager is an operational practice-management software for law firms to manage dockets, deadlines, documents, and billing. It does not provide legal advice, legal recommendations, or formal attorney-client opinions.',
+      },
+      {
+        question: 'How does court date docketing work?',
+        answer: 'You can register hearing dates, mention dates, ruling dates, and pre-trial conferences with judge names, courtroom numbers, and virtual court links. The system alerts advocates and litigation clerks to upcoming dates.',
+      },
+    ],
+  },
 ];
 
 export const FEATURED_APPLICATIONS = APPLICATIONS_CATALOG.slice(0, 4);

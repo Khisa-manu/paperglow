@@ -26,6 +26,7 @@ import {
   LifeBuoy,
   Clock,
   Check,
+  Scale,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -69,6 +70,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         return <Clock className="w-5 h-5 text-red-600" />;
       case 'Package':
         return <Package className="w-5 h-5 text-red-600" />;
+      case 'Scale':
+        return <Scale className="w-5 h-5 text-red-600" />;
       default:
         return <FileCheck className="w-5 h-5 text-red-600" />;
     }

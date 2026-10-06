@@ -430,6 +430,52 @@ export const AppScreenshotsViewer: React.FC<AppScreenshotsViewerProps> = ({
               </div>
             </div>
           )}
+
+          {current.previewType === 'legal' && (
+            <div className="space-y-3 text-xs bg-white dark:bg-[#161a22] p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">
+                    Milimani Commercial Court Docket
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 font-bold text-[10px]">
+                    HCCOMM/E412/2026
+                  </span>
+                </div>
+                <span className="text-neutral-500 font-mono text-[11px]">Formal Hearing: 09:30 AM</span>
+              </div>
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Safariland Logistics Kenya vs. BlueWave Fuel Importers
+                    </div>
+                    <div className="text-neutral-500 text-[11px]">Courtroom 4 • Hon. Lady Justice J. W. Kamau • Claim: KES 48.5M</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                      Witness Trial
+                    </span>
+                    <div className="text-neutral-400 text-[10px] mt-0.5">David Kamau, SC</div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-neutral-900 dark:text-neutral-100">
+                      Filing Deadline: Trial Witness Statements Exchange
+                    </div>
+                    <div className="text-neutral-500 text-[11px]">Statutory e-filing deadline before trial resumption</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">
+                      2 Days Left
+                    </span>
+                    <div className="text-neutral-400 text-[10px] mt-0.5">Brian Omondi Awori</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Caption */}

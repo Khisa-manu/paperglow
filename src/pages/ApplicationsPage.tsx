@@ -19,6 +19,7 @@ import {
   Clock,
   Package,
   Sparkles,
+  Scale,
 } from 'lucide-react';
 
 interface ApplicationsPageProps {
@@ -48,6 +49,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
     'Projects & Work',
     'Organization & HR',
     'Operations & Support',
+    'Warehouse & Inventory',
+    'Legal & Practice Management',
   ];
 
   const getAppIcon = (iconName: string) => {
@@ -74,6 +77,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
         return <Clock className="w-5 h-5 text-red-600" />;
       case 'Package':
         return <Package className="w-5 h-5 text-red-600" />;
+      case 'Scale':
+        return <Scale className="w-5 h-5 text-red-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-red-600" />;
     }

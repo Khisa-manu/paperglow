@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, User, ShoppingBag } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory';
+  currentView: 'home' | 'applications' | 'application-detail' | 'account' | 'branding' | 'invoice-generator' | 'business-manager' | 'property-manager' | 'pharmacy-manager' | 'party-manager' | 'ticketing' | 'booking' | 'stock-inventory' | 'legal-practice';
   isLoggedIn: boolean;
   userName?: string;
   subscribedAppCount: number;
@@ -22,6 +22,7 @@ interface NavbarProps {
   onNavigateTicketing?: () => void;
   onNavigateBooking?: () => void;
   onNavigateStockInventory?: () => void;
+  onNavigateLegalPractice?: () => void;
   onNavigateSection: (sectionId: string) => void;
 }
 
@@ -46,6 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigateTicketing,
   onNavigateBooking,
   onNavigateStockInventory,
+  onNavigateLegalPractice,
   onNavigateSection,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -202,6 +204,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Inventory</span>
                 <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white">
                   Stock
+                </span>
+              </button>
+            )}
+            {onNavigateLegalPractice && (
+              <button
+                onClick={onNavigateLegalPractice}
+                className={`hover:text-red-600 dark:hover:text-red-500 transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  (currentView as string) === 'legal-practice'
+                    ? 'text-red-600 dark:text-red-500 font-semibold'
+                    : ''
+                }`}
+              >
+                <span>Legal Practice</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                  Advocates
                 </span>
               </button>
             )}
@@ -412,6 +429,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Paperglow Stock Inventory</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
                     Stock
+                  </span>
+                </button>
+              )}
+              {onNavigateLegalPractice && (
+                <button
+                  onClick={() => {
+                    onNavigateLegalPractice();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md flex items-center justify-between"
+                >
+                  <span>Paperglow Legal Practice</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                    Advocates
                   </span>
                 </button>
               )}
