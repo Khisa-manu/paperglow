@@ -22,7 +22,7 @@ export interface BusinessApp {
   shortDescription: string;
   description: string;
   mainBenefit: string;
-  category: 'Finance & Payments' | 'Sales & CRM' | 'Projects & Work' | 'Organization & HR' | 'Operations & Support' | 'Operations & Services' | 'Warehouse & Inventory' | 'Legal & Practice Management' | 'Education & Institutions';
+  category: 'Finance & Payments' | 'Sales & CRM' | 'Projects & Work' | 'Organization & HR' | 'Operations & Support' | 'Operations & Services' | 'Warehouse & Inventory' | 'Legal & Practice Management' | 'Education & Institutions' | 'Healthcare & Medical';
   monthlyPrice: number;
   annualPrice: number;
   iconName: string;

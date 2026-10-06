@@ -21,6 +21,7 @@ import {
   Sparkles,
   Scale,
   GraduationCap,
+  Activity,
 } from 'lucide-react';
 
 interface ApplicationsPageProps {
@@ -86,6 +87,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({
       case 'Users2':
       case 'Users':
         return <Users className="w-5 h-5 text-red-600" />;
+      case 'Activity':
+        return <Activity className="w-5 h-5 text-red-600" />;
       default:
         return <Sparkles className="w-5 h-5 text-red-600" />;
     }

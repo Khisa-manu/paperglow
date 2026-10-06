@@ -28,6 +28,7 @@ import {
   Check,
   Scale,
   GraduationCap,
+  Activity,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -76,6 +77,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         return <Scale className="w-5 h-5 text-red-600" />;
       case 'GraduationCap':
         return <GraduationCap className="w-5 h-5 text-red-600" />;
+      case 'Activity':
+        return <Activity className="w-5 h-5 text-red-600" />;
       default:
         return <FileCheck className="w-5 h-5 text-red-600" />;
     }
