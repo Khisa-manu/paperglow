@@ -176,15 +176,17 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
           name: p.name || 'Unnamed Item',
           sku: p.sku || `SKU-${p.id}`,
           barcode: p.barcode || '',
-          category: p.category || 'General',
+          categoryId: String(p.category_id || 'cat-general'),
+          categoryName: p.category || p.category_name || 'General',
+          supplierId: String(p.supplier_id || 'sup-1'),
+          supplierName: p.supplier || p.supplier_name || 'Direct Local Supplier',
           currentQuantity: Number(p.quantity ?? p.currentQuantity ?? 0),
           minStockLevel: Number(p.min_stock_level ?? p.minStockLevel ?? 5),
           maxStockLevel: Number(p.max_stock_level ?? p.maxStockLevel ?? 100),
-          unitOfMeasure: p.unit || p.unitOfMeasure || 'pcs',
-          costPriceKes: Number(p.cost_price ?? p.costPriceKes ?? 0),
+          unit: p.unit || p.unitOfMeasure || 'Pcs',
+          buyingPriceKes: Number(p.cost_price ?? p.costPriceKes ?? 0),
           sellingPriceKes: Number(p.selling_price ?? p.sellingPriceKes ?? 0),
-          supplier: p.supplier || 'Direct Local Supplier',
-          locationRack: p.location || p.locationRack || 'Warehouse A-1',
+          location: p.location || p.locationRack || 'Warehouse A-1',
           status: computeProductStatus(
             Number(p.quantity ?? p.currentQuantity ?? 0),
             Number(p.min_stock_level ?? p.minStockLevel ?? 5),
@@ -222,9 +224,11 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
           phone: s.phone || '',
           email: s.email || '',
           address: s.address || '',
-          suppliedCategories: s.supplied_categories ? s.supplied_categories.split(',') : ['General'],
+          city: s.city || 'Nairobi',
+          suppliedCategoryIds: s.supplied_category_ids || [],
           paymentTerms: s.payment_terms || 'Net 30',
-          rating: Number(s.rating || 4.5),
+          outstandingBalanceKes: Number(s.balance || 0),
+          totalPurchasesKes: Number(s.total_purchases || 0),
         }));
         setSuppliers(cloudSups);
       }
@@ -287,9 +291,9 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
       api.inventory.updateProduct(productData.id, {
         name: productData.name,
         sku: productData.sku,
-        category: productData.category,
+        category: productData.categoryName || productData.categoryId,
         quantity: productData.currentQuantity,
-        cost_price: productData.costPriceKes,
+        cost_price: productData.buyingPriceKes,
         selling_price: productData.sellingPriceKes,
       }).catch((e) => console.warn('Cloud product update failed:', e));
 
@@ -308,9 +312,9 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
       api.inventory.createProduct({
         name: newProduct.name,
         sku: newProduct.sku,
-        category: newProduct.category,
+        category: newProduct.categoryName || newProduct.categoryId,
         quantity: newProduct.currentQuantity,
-        cost_price: newProduct.costPriceKes,
+        cost_price: newProduct.buyingPriceKes,
         selling_price: newProduct.sellingPriceKes,
       }).catch((e) => console.warn('Cloud product create failed:', e));
 
@@ -426,7 +430,7 @@ export const StockInventoryPage: React.FC<StockInventoryPageProps> = ({
       quantity: newQty,
     }).catch((e) => console.warn('Cloud product qty sync failed:', e));
 
-    showToast(`Stock updated for ${targetProduct.name}: New Balance = ${newQty} ${targetProduct.unitOfMeasure}. Saved to MariaDB cloud.`);
+    showToast(`Stock updated for ${targetProduct.name}: New Balance = ${newQty} ${targetProduct.unit}. Saved to MariaDB cloud.`);
   };
 
   const handleReceiveStock = (poId: string) => {

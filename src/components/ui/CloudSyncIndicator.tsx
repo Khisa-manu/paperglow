@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, CloudCheck, RefreshCw, Database } from 'lucide-react';
+import { RefreshCw, Database } from 'lucide-react';
 
 interface CloudSyncIndicatorProps {
   appName: string;

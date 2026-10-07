@@ -177,22 +177,18 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
           id: String(m.id || m.uuid),
           name: m.name || 'Unnamed Medicine',
           genericName: m.generic_name || m.name || '',
-          brandName: m.brand_name || '',
-          category: m.category || 'General',
-          dosageForm: m.dosage_form || 'tablets',
-          strength: m.strength || '',
-          packSize: m.pack_size || '100s',
+          category: (m.category as any) || 'Antibiotics',
+          manufacturer: m.brand_name || m.manufacturer || 'Local Pharma',
+          skuBarcode: m.barcode || m.sku || `MED-${m.id}`,
           batchNumber: m.batch_number || `BATCH-${m.id}`,
-          expiryDate: m.expiry_date || '2027-12-31',
-          manufacturingDate: m.manufacturing_date || '2025-01-01',
-          purchasePriceKes: Number(m.unit_cost ?? m.cost_price ?? 0),
-          sellingPriceKes: Number(m.unit_price ?? m.selling_price ?? 0),
+          unitOfMeasure: m.dosage_form || m.unit_of_measure || 'Pack of 10',
           quantityInStock: Number(m.quantity ?? m.stock_quantity ?? 50),
           minStockLevel: Number(m.reorder_level ?? 10),
-          supplier: m.supplier || 'Local Meds Distributor',
-          prescriptionRequired: Boolean(m.prescription_required),
-          barcode: m.barcode || '',
-          storageLocation: m.storage_location || 'Aisle 1',
+          buyingPriceKes: Number(m.unit_cost ?? m.cost_price ?? 0),
+          sellingPriceKes: Number(m.unit_price ?? m.selling_price ?? 0),
+          expiryDate: m.expiry_date || '2027-12-31',
+          requiresPrescription: Boolean(m.prescription_required),
+          shelfLocation: m.storage_location || m.shelf_location || 'Aisle 1',
         }));
         setMedicines(cloudMeds);
       }
@@ -209,9 +205,9 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
           subtotalKes: Number(s.subtotal || s.total_amount || 0),
           discountKes: Number(s.discount || 0),
           totalAmountKes: Number(s.total_amount || 0),
-          paymentMethod: s.payment_method || 'mpesa',
+          paymentMethod: (s.payment_method as any) || 'mpesa',
+          paymentStatus: (s.payment_status as any) || 'paid',
           mpesaRef: s.mpesa_ref || s.reference || '',
-          prescriptionNumber: s.prescription_number || '',
         }));
         setSales(cloudSales);
       }
@@ -219,15 +215,14 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
       if (supRes.status === 'fulfilled' && supRes.value?.data && supRes.value.data.length > 0) {
         const cloudSups: PharmacySupplier[] = supRes.value.data.map((sup: any) => ({
           id: String(sup.id || sup.uuid),
-          name: sup.name || '',
+          companyName: sup.company_name || sup.name || 'Local Pharma Ltd',
           contactPerson: sup.contact_person || '',
           phone: sup.phone || '',
           email: sup.email || '',
           address: sup.address || '',
-          categoriesSupplied: sup.categories ? sup.categories.split(',') : ['Pharmaceuticals'],
-          paymentTerms: sup.payment_terms || '30_days',
+          categoriesSupplied: sup.categories ? (Array.isArray(sup.categories) ? sup.categories : sup.categories.split(',')) : ['Pharmaceuticals'],
           outstandingBalanceKes: Number(sup.balance || 0),
-          rating: Number(sup.rating || 4.5),
+          leadTimeDays: Number(sup.lead_time_days || 3),
         }));
         setSuppliers(cloudSups);
       }
@@ -268,17 +263,17 @@ export const PharmacyManagerPage: React.FC<PharmacyManagerPageProps> = ({
     api.pharmacy.createMedicine({
       name: newMed.name,
       generic_name: newMed.genericName,
-      brand_name: newMed.brandName,
+      brand_name: newMed.manufacturer,
       category: newMed.category,
-      dosage_form: newMed.dosageForm,
-      strength: newMed.strength,
-      unit_cost: newMed.purchasePriceKes,
+      dosage_form: newMed.unitOfMeasure,
+      strength: '',
+      unit_cost: newMed.buyingPriceKes,
       unit_price: newMed.sellingPriceKes,
       quantity: newMed.quantityInStock,
       reorder_level: newMed.minStockLevel,
       batch_number: newMed.batchNumber,
       expiry_date: newMed.expiryDate,
-      supplier: newMed.supplier,
+      supplier: newMed.manufacturer,
     }).catch((e) => console.warn('Cloud create medicine failed:', e));
 
     // Record initial stock movement

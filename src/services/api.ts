@@ -33,7 +33,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       });
       const authData = await authRes.json();
       if (authData?.data?.token) {
-        token = authData.data.token;
+        token = String(authData.data.token);
         localStorage.setItem('paperglow_token', token);
         if (authData.data.organization?.id) {
           localStorage.setItem('paperglow_active_org_id', String(authData.data.organization.id));

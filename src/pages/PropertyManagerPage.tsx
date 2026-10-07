@@ -158,13 +158,18 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       ]);
 
       if (propRes.status === 'fulfilled' && propRes.value?.data && propRes.value.data.length > 0) {
-        const cloudProps = propRes.value.data.map((p: any) => ({
+        const cloudProps: Property[] = propRes.value.data.map((p: any) => ({
           id: String(p.id || p.uuid),
           name: p.name || 'Estate Property',
-          type: p.property_type || p.type || 'residential',
+          propertyType: (p.property_type as any) || 'apartment_building',
+          location: p.location || 'Kilimani, Nairobi',
           address: p.location || p.address || 'Nairobi',
-          city: p.county || p.city || 'Nairobi',
+          county: p.county || p.city || 'Nairobi',
           totalUnits: Number(p.total_units || 10),
+          yearBuilt: Number(p.year_built || 2022),
+          caretakerName: p.caretaker_name || 'Estate Caretaker',
+          caretakerPhone: p.caretaker_phone || '+254 712 000 000',
+          amenities: ['24/7 Security', 'Borehole Water', 'CCTV'],
           imageUrl: p.image_url || '/assets/images/studio-1.webp',
           notes: p.notes || '',
         }));
@@ -172,18 +177,19 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       }
 
       if (tenRes.status === 'fulfilled' && tenRes.value?.data && tenRes.value.data.length > 0) {
-        const cloudTenants = tenRes.value.data.map((t: any) => ({
+        const cloudTenants: Tenant[] = tenRes.value.data.map((t: any) => ({
           id: String(t.id || t.uuid),
           propertyId: String(t.property_id || properties[0]?.id || 'prop-1'),
           unitId: String(t.unit_id || 'unit-1'),
           name: t.full_name || t.name || 'Tenant',
           email: t.email || '',
           phone: t.phone || '',
-          nationalId: t.national_id || '',
-          emergencyContact: t.emergency_contact || '',
+          nationalIdOrPassport: t.national_id || t.nationalIdOrPassport || 'ID-000000',
+          emergencyContact: t.emergency_contact || 'Next of Kin',
+          emergencyPhone: t.emergency_phone || '+254 700 000 000',
+          employer: t.employer || 'Private Sector',
+          leaseId: String(t.lease_id || 'lease-1'),
           moveInDate: t.lease_start || new Date().toISOString().split('T')[0],
-          monthlyRentKes: Number(t.rent_amount || 45000),
-          depositPaidKes: Number(t.deposit_paid || 45000),
           balanceKes: Number(t.balance || 0),
           status: 'active',
         }));
@@ -191,18 +197,18 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       }
 
       if (rentRes.status === 'fulfilled' && rentRes.value?.data && rentRes.value.data.length > 0) {
-        const cloudPayments = rentRes.value.data.map((r: any) => ({
+        const cloudPayments: RentPayment[] = rentRes.value.data.map((r: any) => ({
           id: String(r.id || r.uuid),
           tenantId: String(r.tenant_id || ''),
           propertyId: String(r.property_id || ''),
           unitId: String(r.unit_id || ''),
           amountKes: Number(r.amount || 0),
           paymentDate: r.payment_date || new Date().toISOString().split('T')[0],
-          periodMonth: r.period_month || 'Current',
-          paymentMethod: r.payment_method || 'M-Pesa',
-          referenceCode: r.reference || `REF-${r.id}`,
+          monthFor: r.period_month || 'October 2026',
+          paymentMethod: (r.payment_method as any) || 'mpesa',
+          transactionReference: r.reference || `REF-${r.id}`,
           receiptNumber: r.reference || `RCT-${r.id}`,
-          status: 'verified',
+          status: 'confirmed',
         }));
         setPayments(cloudPayments);
       }
@@ -241,9 +247,9 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
 
     api.property.createProperty({
       name: newProp.name,
-      property_type: newProp.type,
-      location: newProp.address,
-      county: newProp.city,
+      property_type: newProp.propertyType,
+      location: newProp.location || newProp.address,
+      county: newProp.county,
       total_units: newProp.totalUnits,
     }).catch(() => {});
 
@@ -302,8 +308,8 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       full_name: newTenant.name,
       phone: newTenant.phone,
       email: newTenant.email,
-      national_id: newTenant.nationalId,
-      rent_amount: newTenant.monthlyRentKes,
+      national_id: newTenant.nationalIdOrPassport,
+      rent_amount: (newTenant as any).monthlyRentKes || 45000,
       lease_start: newTenant.moveInDate,
     }).catch(() => {});
 
@@ -415,7 +421,7 @@ export const PropertyManagerPage: React.FC<PropertyManagerPageProps> = ({
       category: expense.category,
       amount: expense.amountKes,
       description: expense.description,
-      date: expense.date,
+      date: expense.expenseDate,
     }).catch(() => {});
 
     showToast(`Expense voucher ${voucherNumber} recorded.`);

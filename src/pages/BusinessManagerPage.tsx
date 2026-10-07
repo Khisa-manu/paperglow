@@ -182,47 +182,53 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       ]);
 
       if (custRes.status === 'fulfilled' && custRes.value?.data && custRes.value.data.length > 0) {
-        const cloudCusts = custRes.value.data.map((c: any) => ({
+        const cloudCusts: Customer[] = custRes.value.data.map((c: any) => ({
           id: String(c.id || c.uuid),
           name: c.name || '',
-          company: c.notes || c.company || '',
+          company: c.company || c.notes || '',
           email: c.email || '',
           phone: c.phone || '',
           address: c.address || '',
-          status: c.status || 'active',
-          balance: Number(c.balance || 0),
-          totalInvoiced: Number(c.total_invoiced || 0),
+          city: c.city || 'Nairobi',
+          kraPin: c.kra_pin || 'P051000000X',
+          outstandingBalance: Number(c.balance || 0),
+          totalSpent: Number(c.total_invoiced || 0),
           notes: [],
+          createdAt: c.created_at || new Date().toISOString(),
         }));
         setCustomers(cloudCusts);
       }
 
       if (prodRes.status === 'fulfilled' && prodRes.value?.data && prodRes.value.data.length > 0) {
-        const cloudProds = prodRes.value.data.map((p: any) => ({
+        const cloudProds: InventoryItem[] = prodRes.value.data.map((p: any) => ({
           id: String(p.id || p.uuid),
           name: p.name || '',
           sku: p.sku || `SKU-${p.id}`,
+          type: (p.type as any) || 'product',
           category: p.category || 'General',
           stockQuantity: Number(p.stock_quantity ?? p.stockQuantity ?? 10),
-          unit: p.unit || 'pcs',
-          unitCost: Number(p.unit_cost ?? p.unitCost ?? 0),
+          minStockThreshold: Number(p.reorder_level ?? p.reorderLevel ?? 5),
+          buyingPrice: Number(p.unit_cost ?? p.unitCost ?? 0),
           sellingPrice: Number(p.selling_price ?? p.sellingPrice ?? 0),
-          reorderLevel: Number(p.reorder_level ?? p.reorderLevel ?? 5),
-          status: (p.stock_quantity || 0) <= (p.reorder_level || 5) ? 'low_stock' : 'in_stock',
+          unit: p.unit || 'pcs',
+          description: p.description || '',
+          lastAdjusted: p.updated_at || new Date().toISOString(),
         }));
         setInventory(cloudProds);
       }
 
       if (expRes.status === 'fulfilled' && expRes.value?.data && expRes.value.data.length > 0) {
-        const cloudExps = expRes.value.data.map((e: any) => ({
+        const cloudExps: ExpenseRecord[] = expRes.value.data.map((e: any) => ({
           id: String(e.id || e.uuid),
+          voucherNumber: e.voucher_number || `EXP-${String(e.id || '01').padStart(4, '0')}`,
           date: e.date || new Date().toISOString().split('T')[0],
-          category: e.category || 'General',
+          category: (e.category as any) || 'Miscellaneous',
           description: e.title || e.description || '',
           amount: Number(e.amount || 0),
           payee: e.paid_to || e.payee || '',
           paymentMethod: e.payment_method || 'M-Pesa',
-          status: 'recorded',
+          status: (e.status === 'Paid' || e.status === 'Pending') ? e.status : 'Paid',
+          receiptAttached: Boolean(e.receipt_attached),
         }));
         setExpenses(cloudExps);
       }
@@ -285,7 +291,7 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       customer_name: doc.customerName,
       total_amount: doc.grandTotal,
       status: doc.status,
-      issue_date: doc.date,
+      issue_date: doc.issueDate,
       due_date: doc.dueDate,
     }).catch(() => {});
 
@@ -317,10 +323,10 @@ export const BusinessManagerPage: React.FC<BusinessManagerPageProps> = ({
       sku: item.sku,
       category: item.category,
       unit: item.unit,
-      unit_cost: item.unitCost,
+      unit_cost: item.buyingPrice,
       selling_price: item.sellingPrice,
       stock_quantity: item.stockQuantity,
-      reorder_level: item.reorderLevel,
+      reorder_level: item.minStockThreshold,
     }).catch(() => {});
 
     logActivity('Stock Officer', 'Saved Item', 'inventory', `${item.name} (${item.sku}) updated.`);
