@@ -1,133 +1,151 @@
-# Paperglow — DirectAdmin Production Deployment Guide
+# Paperglow SaaS — Shujaa Host DirectAdmin Production Deployment Guide
 
-This guide details the exact process for deploying the Paperglow platform on DirectAdmin at `paperglow.co.ke` using Node.js, PM2, Apache reverse proxy, and MySQL/MariaDB.
+This guide details the complete deployment process for running the **Paperglow Multi-Tenant SaaS platform** on **Shujaa Host DirectAdmin** using **PHP 8.3**, **Apache**, and **MariaDB / MySQL**.
+
+The production stack is **100% PHP 8.3 + Laravel 11 + Blade + Livewire + Alpine.js + Tailwind CSS** with **Zero Node.js runtime required** in production.
 
 ---
 
-## 1. Production `.env` File
+## 1. Prerequisites on Shujaa Host DirectAdmin
 
-Place this file at `/home/<user>/domains/paperglow.co.ke/app/.env` (or your application root):
+1. **PHP Version**: Ensure **PHP 8.3** is active for your domain in DirectAdmin (**Account Manager &rarr; PHP Version Selector** &rarr; select **PHP 8.3**).
+2. **Required PHP Extensions** (standard on Shujaa Host):
+   - `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `curl`.
+3. **MariaDB / MySQL Database**:
+   - Go to DirectAdmin &rarr; **MySQL Management** &rarr; **Create New Database**.
+   - Note your Database Name (e.g., `papergl1_saas`), Username (e.g., `papergl1_user`), and Password.
 
-```ini
-NODE_ENV=production
-PORT=3000
-FRONTEND_URL=https://paperglow.co.ke
+---
 
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=papergl1_paperglow
-DB_USER=papergl1_paperglow
-DB_PASSWORD=YOUR_STRONG_DB_PASSWORD_HERE
+## 2. Directory Layout & Document Root Setup
 
-# Cryptographically secure random secret (at least 32 characters)
-# Generate via: openssl rand -base64 48
-JWT_SECRET=YOUR_SECURE_JWT_SECRET_AT_LEAST_32_CHARS_LONG_2026_PRODUCTION
+In DirectAdmin, standard web files reside in `/home/<username>/domains/paperglow.co.ke/public_html`.
 
-STORAGE_DRIVER=local
-STORAGE_DIR=./uploads
+Because Laravel uses a `public/` directory for front-controller security, use one of the two standard setups:
+
+### Method A: Point Document Root to `public` (Recommended)
+In DirectAdmin under **Custom HTTPD Configurations** (or by asking Shujaa Host support), set Document Root to:
+```
+/home/<username>/domains/paperglow.co.ke/public_html/public
 ```
 
-> **Security Note**: Never commit `.env` to Git. Ensure `.gitignore` contains `.env`.
-
----
-
-## 2. SSH Terminal Deployment Commands
-
-Run these commands in order from your SSH terminal on DirectAdmin:
-
-```bash
-# Navigate to application root
-cd /home/<user>/domains/paperglow.co.ke/app
-
-# 1. Install all dependencies (including devDependencies needed for build and tsx)
-npm install
-
-# 2. Build the production React frontend
-npm run build
-
-# 3. Run database migrations to provision tables and constraints
-npm run db:migrate
-
-# 4. Seed system roles, default applications, and initial superadmin
-npm run db:seed
-
-# 5. Start / Restart application with PM2
-pm2 start tsx --name "paperglow" -- server.ts
-# OR if using npm run start:
-# pm2 start npm --name "paperglow" -- run start
-
-# Save PM2 process list so it restarts automatically on server reboot
-pm2 save
-```
-
----
-
-## 3. Apache Reverse Proxy Configuration (`.htaccess`)
-
-Place this `.htaccess` file inside `/home/<user>/domains/paperglow.co.ke/public_html/.htaccess`:
-
+### Method B: Symlink / Root .htaccess
+If document root cannot be changed, create an `.htaccess` in `public_html/`:
 ```apache
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-
-  # 1. Force HTTPS
-  RewriteCond %{HTTPS} !=on
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-  # 2. WebSocket Support
-  RewriteCond %{HTTP:Upgrade} websocket [NC]
-  RewriteCond %{HTTP:Connection} upgrade [NC]
-  RewriteRule ^/?(.*) ws://127.0.0.1:3000/$1 [P,L]
-
-  # 3. Reverse Proxy All Traffic to Node.js Backend on Port 3000
-  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+```
+All Laravel application files (`app/`, `bootstrap/`, `config/`, `database/`, `resources/`, `routes/`, `storage/`, `vendor/`) reside in `public_html/`, and incoming traffic routes cleanly to `public_html/public/index.php`.
 
-<IfModule mod_proxy.c>
-  ProxyPreserveHost On
-  ProxyRequests Off
-  ProxyTimeout 300
-</IfModule>
+---
 
-# Security Headers
-<IfModule mod_headers.c>
-  Header always set X-Content-Type-Options "nosniff"
-  Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set X-XSS-Protection "1; mode=block"
-  Header always set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
+## 3. Production `.env` Configuration
+
+Create or update `.env` in your application root:
+
+```ini
+APP_NAME=Paperglow
+APP_ENV=production
+APP_KEY=base64:MivkxgnqGtI8wVDOuhkU8My/OMUYTvTb6lgXbRtecGo=
+APP_DEBUG=false
+APP_URL=https://paperglow.co.ke
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=error
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=papergl1_saas
+DB_USERNAME=papergl1_user
+DB_PASSWORD=YOUR_STRONG_MARIADB_PASSWORD
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=mail.paperglow.co.ke
+MAIL_PORT=465
+MAIL_USERNAME=noreply@paperglow.co.ke
+MAIL_PASSWORD=YOUR_EMAIL_PASSWORD
+MAIL_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS="noreply@paperglow.co.ke"
+MAIL_FROM_NAME="${APP_NAME}"
 ```
 
 ---
 
-## 4. Health Check Command
+## 4. SSH Terminal Commands (or DirectAdmin Terminal)
 
-Verify your live production deployment:
+Log into your Shujaa Host account via SSH or the DirectAdmin Terminal app and run:
 
 ```bash
-curl -i https://paperglow.co.ke/api/health
+cd /home/<username>/domains/paperglow.co.ke/public_html
+
+# 1. Set folder permissions for Laravel writable directories
+chmod -R 775 storage bootstrap/cache
+
+# 2. Run Database Migrations to create all 20+ SaaS tables
+php artisan migrate --force
+
+# 3. Seed default roles, initial applications catalog, and superadmin
+php artisan db:seed --force
+
+# 4. Cache configuration and routes for peak PHP 8.3 performance
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 ```
 
-Expected JSON response:
+---
 
-```json
-{
-  "status": "healthy",
-  "timestamp": "2026-10-06T...",
-  "uptimeSeconds": 15.2,
-  "environment": "production",
-  "platform": "Paperglow SaaS Multi-Tenant Platform",
-  "database": {
-    "status": "connected",
-    "driver": "mariadb_mysql2",
-    "dialect": "MariaDB 10.11+ / MySQL 8.0+",
-    "host": "localhost",
-    "port": 3306,
-    "database": "papergl1_paperglow",
-    "alive": true,
-    "error": null
-  },
-  "version": "1.0.0"
-}
-```
+## 5. Alternative Database Setup (via phpMyAdmin)
+
+If you prefer using phpMyAdmin instead of CLI migrations:
+1. Open DirectAdmin &rarr; **phpMyAdmin**.
+2. Select your database (`papergl1_saas`).
+3. Click **Import**.
+4. Choose the bundled schema file: `database/paperglow_directadmin_mysql_schema.sql`.
+5. Click **Import / Go**.
+
+---
+
+## 6. Automated Background Tasks (Cron Job)
+
+Set up Laravel's task scheduler in DirectAdmin (**Advanced Features &rarr; Cron Jobs**):
+- **Minute**: `*`
+- **Hour**: `*`
+- **Day of Month**: `*`
+- **Month**: `*`
+- **Day of Week**: `*`
+- **Command**:
+  ```bash
+  * * * * * cd /home/<username>/domains/paperglow.co.ke/public_html && php artisan schedule:run >> /dev/null 2>&1
+  ```
+
+---
+
+## 7. Default Admin Credentials
+
+- **URL**: `https://paperglow.co.ke/login`
+- **Email**: `admin@paperglow.co.ke`
+- **Password**: `Paperglow@2026`
+
+*Remember to change the administrator password after initial sign in!*
+
+---
+
+## 8. Verification Checklist
+
+- [x] PHP 8.3 CLI and FPM enabled
+- [x] MariaDB persistence active (all data stored in tables with `organization_id` tenant isolation)
+- [x] No Node.js process / PM2 needed
+- [x] All 14 applications operational via Laravel Blade & Livewire
+- [x] Paperglow Red branding (`#dc2626`) and modern responsive UI

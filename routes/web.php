@@ -106,5 +106,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/clinic-manager', [ClinicManagerController::class, 'index'])->name('clinic-manager');
         Route::post('/clinic-manager/patient', [ClinicManagerController::class, 'storePatient'])->name('clinic-manager.patient');
         Route::post('/clinic-manager/consultation', [ClinicManagerController::class, 'storeConsultation'])->name('clinic-manager.consultation');
+
+        // Team / Workforce alias
+        Route::get('/team', [OrganizationController::class, 'members'])->name('team');
+
+        // Contracts & Agreements alias
+        Route::get('/contracts', [LegalPracticeController::class, 'index'])->name('contracts');
     });
 });

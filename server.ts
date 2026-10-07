@@ -76,28 +76,95 @@ app.use('/api', errorHandler);
 app.use('/api/v1', errorHandler);
 
 // ============================================================================
-// MOUNT FRONTEND (Vite in Dev / Static in Production)
+// MOUNT FRONTEND / LARAVEL PHP PROXY
 // ============================================================================
-async function startServer() {
-  if (process.env.NODE_ENV === 'production') {
-    const distPath = path.join(__dirname, 'dist');
-    app.use(express.static(distPath));
-    app.get('/{*splat}', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  } else {
-    const { createServer } = await import('vite');
-    const vite = await createServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+import http from 'http';
+import { spawn } from 'child_process';
+
+let phpProcess: any = null;
+
+function ensurePhpServer() {
+  if (!phpProcess) {
+    try {
+      phpProcess = spawn('php', ['-S', '127.0.0.1:8088', '-t', 'public', 'public/index.php'], {
+        stdio: 'inherit',
+      });
+      phpProcess.on('exit', () => {
+        phpProcess = null;
+      });
+    } catch (e) {
+      console.error('[Laravel PHP] Failed to spawn php server:', e);
+    }
   }
+}
+
+async function startServer() {
+  ensurePhpServer();
+
+  // Proxy non-API web traffic directly to Laravel 11 Blade + Livewire backend
+  app.use((req: Request, res: Response, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+
+    ensurePhpServer();
+
+    const options: http.RequestOptions = {
+      hostname: '127.0.0.1',
+      port: 8088,
+      path: req.url,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: 'localhost:3000',
+        'x-forwarded-host': req.headers.host || 'localhost:3000',
+        'x-forwarded-proto': 'http',
+      },
+    };
+
+    const proxyReq = http.request(options, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error('[Proxy Error to Laravel PHP]:', err.message);
+      res.status(502).send(`
+        <html>
+          <body style="font-family:sans-serif;padding:40px;background:#f8fafc;color:#1e293b;">
+            <h2 style="color:#dc2626;">Paperglow SaaS — Initializing PHP 8.3 & MariaDB Engine</h2>
+            <p>Starting Laravel services on Shujaa Host runtime...</p>
+            <script>setTimeout(() => window.location.reload(), 2000);</script>
+          </body>
+        </html>
+      `);
+    });
+
+    // Handle incoming body for POST/PUT if parsed
+    if (req.body && Object.keys(req.body).length > 0) {
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const data = JSON.stringify(req.body);
+        proxyReq.setHeader('content-length', Buffer.byteLength(data));
+        proxyReq.write(data);
+        proxyReq.end();
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const params = new URLSearchParams(req.body as any).toString();
+        proxyReq.setHeader('content-length', Buffer.byteLength(params));
+        proxyReq.write(params);
+        proxyReq.end();
+      } else {
+        req.pipe(proxyReq);
+      }
+    } else {
+      req.pipe(proxyReq);
+    }
+  });
 
   app.listen(config.port, '0.0.0.0', () => {
     console.log(`[Paperglow] Multi-Tenant SaaS Backend running on http://0.0.0.0:${config.port}`);
     console.log(`[Paperglow] Health Check: http://0.0.0.0:${config.port}/api/health`);
-    console.log(`[Paperglow] Database Driver: MariaDB / MySQL (mysql2 pool)`);
+    console.log(`[Paperglow] DirectAdmin MariaDB Engine + Laravel 11 Livewire Active`);
   });
 }
 
